@@ -51,6 +51,7 @@ export default async function EditTournamentPage({
       <div className="bg-bg-secondary border border-white/5 rounded-[2rem] p-8 shadow-2xl">
         <form
           action={async (formData) => {
+            "use server";
             await updateTournament(tournamentId, formData);
           }}
           className="space-y-6"

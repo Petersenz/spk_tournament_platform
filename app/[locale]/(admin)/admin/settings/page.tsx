@@ -51,6 +51,7 @@ export default async function AdminSettingsPage() {
 
       <form
         action={async (formData) => {
+          "use server";
           await updateSettings(formData);
         }}
         className="grid grid-cols-1 lg:grid-cols-2 gap-10"

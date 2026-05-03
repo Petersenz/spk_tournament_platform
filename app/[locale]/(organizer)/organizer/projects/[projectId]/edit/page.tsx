@@ -43,6 +43,7 @@ export default async function EditProjectPage({
       <div className="bg-bg-secondary border border-border-primary rounded-xl p-8">
         <form
           action={async (formData) => {
+            "use server";
             await updateProject(projectId, formData);
           }}
           className="space-y-6"
