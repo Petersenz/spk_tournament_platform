@@ -1,0 +1,15 @@
+warn|CQ-001|ESLint errors|Could not parse ESLint output|medium|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-001.txt
+warn|CQ-002|ESLint warnings|Could not parse|low|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-002.txt
+pass|CQ-003|Prettier formatted|all files formatted|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-003.txt
+warn|CQ-004|No unused dependencies|unused: 2|medium|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-004.txt
+pass|CQ-005|No circular imports|circular: 0|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-005.txt
+warn|CQ-006|Copy-paste detection|duplication: 4.16% (max: 3%)|medium|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-006.txt
+pass|CQ-007|TypeScript strict mode|strict: true|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-007.txt
+pass|CQ-008|No excessive 'any' types|count: 2|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-008.txt
+warn|CQ-009|TODO/FIXME count|count: 73 (max: 5)|low|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-009.txt
+fail|CQ-010|No console.log in src|count: 7|medium|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-010.txt
+warn|CQ-011|No files > 500 lines|4 files exceed limit|medium|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-011.txt
+pass|CQ-012|Function length check|sampled — review evidence|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-012.txt
+pass|CQ-013|HTML validation|N/A — JSX/TSX project|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-013.txt
+pass|CQ-014|Commitlint config exists|found|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-014.txt
+pass|CQ-015|ESLint config valid|found|info|/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/QA-QC_Master/nightwatch/results/2026-04-08_0242/evidence/CQ-015.txt

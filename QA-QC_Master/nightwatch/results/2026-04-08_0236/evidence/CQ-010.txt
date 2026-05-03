@@ -1,0 +1,7 @@
+count=7\n\n/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/components/marketing/features-grid.tsx:48:    desc: 'Deprecated patterns, inline styles, console.log detection',
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/admin/api-cost-logger.ts:58:      console.log(
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/scan/phases/code-quality.ts:115:        'Remove console.log statements or use a build tool to strip them.'
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/alerts/notifier.ts:40:  console.log(`[Alert] ${payload.severity}: ${payload.title}`);
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/events/register-handlers.ts:65:  console.log('[ScanEvents] Handlers registered: regression-detector, webhook-dispatcher');
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/data/checklist/items-development.ts:11:    title: 'No console.log in production code',
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/data/checklist/items-development.ts:12:    titleTh: 'ไม่มี console.log ใน production code',

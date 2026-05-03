@@ -1,0 +1,259 @@
+{
+  "Navbar": {
+    "tournaments": "Tournaments",
+    "games": "Games",
+    "about": "About",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
+  "NotFound": {
+    "title": "Arena Not Found",
+    "description": "The battlefield you are looking for has been moved or no longer exists. Regroup at the headquarters and find a new challenge.",
+    "return": "Return to Base",
+    "browse": "Browse Arenas"
+  },
+  "HomePage": {
+    "hero": {
+      "title": "COMPETE. CONQUER. CLAIM GLORY.",
+      "subtitle": "The ultimate tournament platform for Samutprakan Esport Association.",
+      "cta_primary": "Browse Tournaments",
+      "cta_secondary": "Host Competition"
+    },
+    "home": "Home",
+    "features": {
+      "logic_title": "Tournament Logic",
+      "logic_desc": "Single & Double Elimination brackets generated instantly.",
+      "updates_title": "Realtime Updates",
+      "updates_desc": "See match results and bracket shifts as they happen.",
+      "teams_title": "Team Management",
+      "teams_desc": "Build your squad and manage registrations with ease.",
+      "stats_title": "Official Stats",
+      "stats_desc": "Verified results for Samutprakan Esports Association."
+    },
+    "arenas": {
+      "title": "Upcoming Arenas",
+      "subtitle": "Join the next wave of competition",
+      "view_all": "View All"
+    },
+    "footer": {
+      "copyright": "© 2026. Empowering the future of Thai Gaming."
+    }
+  },
+  "Tournaments": {
+    "title": "Browse Tournaments",
+    "subtitle": "Find the perfect competition. From local community cups to major esports championships, claim your glory here.",
+    "empty": "No tournaments found",
+    "empty_desc": "Try adjusting your filters or search terms.",
+    "slots": "Slots",
+    "game": "Game"
+  },
+  "Games": {
+    "title": "Our Arenas",
+    "subtitle": "Discover the games we host and compete in.",
+    "featured": "Featured Tournaments",
+    "upcoming": "Upcoming Tournaments",
+    "ongoing": "Ongoing Tournaments",
+    "past": "Past Tournaments",
+    "no_featured": "No featured tournaments available.",
+    "no_upcoming": "No upcoming tournaments found.",
+    "no_ongoing": "No ongoing tournaments at the moment.",
+    "no_past": "No past tournament history.",
+    "arenas": "Available Arenas"
+  },
+  "About": {
+    "title": "About Samutprakan Esport",
+    "description": "We are dedicated to building a professional ecosystem for competitive gaming in Samutprakan. Our platform empowers organizers to host world-class tournaments and players to discover their potential.",
+    "values": {
+      "excellence": {
+        "title": "Excellence",
+        "desc": "We provide the tools for competitive integrity and fair play."
+      },
+      "community": {
+        "title": "Community",
+        "desc": "Bringing together gamers from all across the province."
+      },
+      "professionalism": {
+        "title": "Professionalism",
+        "desc": "Standardizing tournament management for official organizations."
+      },
+      "passion": {
+        "title": "Passion",
+        "desc": "Built by gamers, for gamers, with the spirit of the game."
+      }
+    },
+    "partner": {
+      "title": "Interested in partnering?",
+      "description": "If you are an organization or sponsor looking to support the Samutprakan Esports Association, we would love to hear from you."
+    }
+  },
+  "Organizer": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "projects": "Projects",
+      "tournaments": "Tournaments",
+      "participants": "Participants",
+      "hub": "Organizer Hub"
+    },
+    "dashboard": {
+      "title": "Organizer Hub",
+      "subtitle": "Quick overview of your esport empire.",
+      "stats": {
+        "projects": "Projects",
+        "tournaments": "Tournaments",
+        "players": "Total Players",
+        "matches": "Matches"
+      },
+      "recent": "Recent Tournaments"
+    }
+  },
+  "Player": {
+    "sidebar": {
+      "my_tournaments": "My Tournaments",
+      "history": "Match History",
+      "settings": "Settings"
+    },
+    "dashboard": {
+      "title": "Player Dashboard",
+      "subtitle": "Manage your tournament journey.",
+      "stats": {
+        "joined": "Total Joined",
+        "pending": "Pending Matches",
+        "rank": "Top Achievement"
+      }
+    }
+  },
+  "Auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your account to continue.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Login",
+      "no_account": "Don't have an account?",
+      "register": "Register"
+    },
+    "register": {
+      "title": "Join the Arena",
+      "subtitle": "Create your account and start competing.",
+      "nickname": "Nickname",
+      "role": "Role",
+      "submit": "Create Account",
+      "has_account": "Already have an account?"
+    }
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "view_all": "View All",
+    "manage": "Manage",
+    "delete": "Delete",
+    "back": "Back"
+  },
+  "Metadata": {
+    "default_title": "Samutprakan Esports Association",
+    "default_desc": "The ultimate tournament platform for Samutprakan Esport Association.",
+    "admin_dashboard": "System Overview",
+    "admin_games": "Game Library",
+    "admin_users": "User Directory",
+    "admin_reports": "Global Reports",
+    "admin_settings": "System Config",
+    "player_dashboard": "Player Dashboard",
+    "organizer_dashboard": "Organizer Hub",
+    "home": "Home",
+    "tournaments": "Tournaments",
+    "games": "Games",
+    "about": "About Us"
+  },
+  "Tournament": {
+    "champions": "The Champions",
+    "gold": "Gold Medalist",
+    "silver": "Silver Medal",
+    "bronze": "Bronze Medal",
+    "confirm_results": "Confirm Results",
+    "match_recorded": "Match Recorded",
+    "arena_empty": "Arena is empty. Initialize the bracket to start.",
+    "arena_preparing": "The arena is currently being prepared.",
+    "round": "Round",
+    "bye": "BYE",
+    "tbd": "TBD",
+    "realtime": "Real-time Synchronized Bracket",
+    "competitors_ready": "{count} Competitors Ready",
+    "not_configured": "Tournament Not Configured",
+    "setup_required": "You need to configure the tournament format and stages before you can generate the bracket.",
+    "initialize": "Initialize Bracket",
+    "reset": "Reset & Regenerate",
+    "overview": "Tournament Overview",
+    "live_brackets": "Live Brackets",
+    "tech_specs": "Technical Specs",
+    "join_arena": "Join Arena",
+    "slots_occupied": "Slots Occupied",
+    "hosted_by": "Hosted by",
+    "capacity": "Capacity",
+    "mode": "Mode",
+    "format": "Format",
+    "status": "Status",
+    "entry_open": "Entry is open for all qualified players",
+    "rules_agreement": "By joining, you agree to the Samutprakan Esport Association official tournament rules.",
+    "registered": "Registered",
+    "go_to_dashboard": "Go to Dashboard",
+    "login_to_join": "Login to Join",
+    "closed": "Closed",
+    "slots_unit": "Slots",
+    "confirmed": "Confirmed",
+    "pending": "Pending",
+    "status_registration_open": "Registration Open",
+    "status_registration_closed": "Registration Closed",
+    "status_in_progress": "In Progress",
+    "status_completed": "Completed",
+    "config": "Config",
+    "live_page": "Live Page",
+    "edit_info": "Edit Info",
+    "manage_entries": "Manage Entries",
+    "total_confirmed": "Total Confirmed",
+    "flow": "Tournament Flow",
+    "no_matches": "No Matches Generated Yet",
+    "init_bracket_desc": "Click Initialize Bracket above to generate the match schedule based on your approved participants.",
+    "min_required": "Min {count} Required",
+    "finish_setup_first": "Finish Setup to Generate Bracket",
+    "slots": "{count} Slots",
+    "custom_arena": "Custom Arena",
+    "team_name": "Team Name"
+  },
+  "Setup": {
+    "title": "Tournament Setup",
+    "step_1": "Format & Stages",
+    "step_1_desc": "Configure brackets",
+    "step_2": "Registration",
+    "step_2_desc": "Deadlines & access",
+    "step_3": "Review & Publish",
+    "step_3_desc": "Go live now",
+    "stage_config": "Stage Config",
+    "stage_desc": "Define how matches are played in this stage.",
+    "stage_name": "Stage Name",
+    "format_type": "Format Type",
+    "participant_type": "Participant Type",
+    "type_player": "Solo Player",
+    "type_team": "Team-based",
+    "team_size_config": "Team Size Configuration",
+    "min_players": "Min Players per Team",
+    "max_players": "Max Players per Team",
+    "access_control": "Access Control",
+    "access_desc": "Control how competitors join your arena.",
+    "open_reg": "Open Registration",
+    "open_reg_desc": "Allow players to find and join publicly.",
+    "approval_mode": "Approval Mode",
+    "auto_title": "Automatic",
+    "auto_desc": "Instant join. Players enter the arena immediately upon registration.",
+    "manual_title": "Manual",
+    "manual_desc": "Curated arena. You review and approve each entry before they are confirmed.",
+    "deadline": "Registration Deadline",
+    "deadline_hint": "Players won't be able to join after this time. Leave empty for no deadline.",
+    "final_review": "Final Review",
+    "ready_live": "Ready to take your tournament live?",
+    "double_check": "Double check all settings before publishing. Once registrations start, changing the tournament format might affect active brackets.",
+    "finish_publish": "Finish & Go Live"
+  }
+}

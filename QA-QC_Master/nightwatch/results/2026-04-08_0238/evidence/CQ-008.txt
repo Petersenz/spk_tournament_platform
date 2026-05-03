@@ -1,0 +1,2 @@
+count=2\n\n/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/components/admin/api-health/fallback-config.tsx:66:  const updateRule = (dim: string, field: keyof FallbackRule, value: any) => {
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/report/white-label.ts:58:  // Fallback: any template from this user

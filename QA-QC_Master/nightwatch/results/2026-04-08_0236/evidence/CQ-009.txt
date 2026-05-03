@@ -1,0 +1,10 @@
+count=73\n\n/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/addons/route.ts:67:    // TODO: Integrate with Stripe for real payment
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/addons/[id]/route.ts:79:      // TODO: Cancel Stripe subscription
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/addons/[id]/route.ts:132:    // TODO: Cancel Stripe subscription
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/settings/health/route.ts:26:  // TODO: Check external services (DB ping, Stripe API, Sentry, Resend)
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/settings/maintenance/route.ts:14:  // TODO: Save to feature_flags or system settings + audit log
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/settings/fixed-costs/route.ts:8:  // TODO: Query fixed_costs table
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/settings/fixed-costs/route.ts:20:  // TODO: Upsert fixed_costs table + audit log
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/settings/pricing/route.ts:13:  // TODO: Update plan pricing in DB + sync to Stripe Products/Prices API + audit log
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/api-health/test/route.ts:16:  // TODO: Test specific provider connection
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/api/admin/api-health/route.ts:8:  // TODO: Check each provider's health endpoint

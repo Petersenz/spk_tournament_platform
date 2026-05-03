@@ -1,0 +1,5 @@
+Manual check recommended.\nSample functions found:\n/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/middleware.ts:64:function isPublicPath(pathname: string): boolean {
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/middleware.ts:70:function isProtectedPath(pathname: string): boolean {
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/middleware.ts:74:function getClientIp(request: NextRequest): string {
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/middleware.ts:82:export default auth(function middleware(request) {
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/app/robots.ts:3:export default function robots(): MetadataRoute.Robots {

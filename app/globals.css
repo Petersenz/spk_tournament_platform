@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #050505;
+  --color-foreground: #ffffff;
+  --color-brand-primary: #f40009;
+  --color-brand-subtle: rgba(244, 0, 9, 0.1);
+  --color-bg-secondary: #0c0c0e;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-ring: #f40009;
+
+  --font-display: var(--font-kanit);
+  --font-sans: var(--font-inter);
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-white/10 outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-display antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-black uppercase tracking-tighter;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 border border-white/10 backdrop-blur-xl;
+  }
+
+  .btn-primary {
+    @apply bg-brand-primary text-white hover:bg-white hover:text-black transition-all font-bold uppercase tracking-widest;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  @keyframes shake {
+    10%,
+    90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+    20%,
+    80% {
+      transform: translate3d(2px, 0, 0);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+    40%,
+    60% {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
+}
+
+/* Custom Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(244, 0, 9, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 0, 9, 0.5);
+}

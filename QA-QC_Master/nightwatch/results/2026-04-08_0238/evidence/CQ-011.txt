@@ -1,0 +1,4 @@
+files_over_500_lines=4\n\n/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/validations.ts: 658 lines
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/lib/db/schema.ts: 798 lines
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/data/prompts.ts: 524 lines
+/Users/rattanasak/Documents/Master Fundamental/Master ViberQC/src/data/tools.ts: 586 lines

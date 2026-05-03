@@ -1,0 +1,35 @@
+[
+  {
+    "id": "2026-04-08_0238",
+    "date": "2026-04-07T19:39:43Z",
+    "project": "viberqc",
+    "mode": "standard",
+    "score": 0,
+    "grade": "F",
+    "critical": 0,
+    "high": 0,
+    "total_checks": 0
+  },
+  {
+    "id": "2026-04-08_0240",
+    "date": "2026-04-07T19:41:30Z",
+    "project": "viberqc",
+    "mode": "standard",
+    "score": 0,
+    "grade": "F",
+    "critical": 0,
+    "high": 0,
+    "total_checks": 0
+  },
+  {
+    "id": "2026-04-08_0242",
+    "date": "2026-04-07T19:43:11Z",
+    "project": "viberqc",
+    "mode": "standard",
+    "score": 73,
+    "grade": "C",
+    "critical": 0,
+    "high": 0,
+    "total_checks": 15
+  }
+]
