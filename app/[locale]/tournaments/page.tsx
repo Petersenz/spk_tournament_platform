@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Search, Trophy } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { TournamentFilters } from "@/components/TournamentFilters";
+import Image from "next/image";
 
 export async function generateMetadata({
   params,
@@ -37,7 +38,7 @@ export default async function PublicTournamentsPage({
   // Build Query
   let query = supabase
     .from("tournaments")
-    .select("*, projects(name), games(name), participants(count)")
+    .select("*, projects(name), games(name, cover_url), participants(count)")
     .neq("status", "draft");
 
   if (search) {
@@ -105,12 +106,27 @@ export default async function PublicTournamentsPage({
                       </span>
                     </div>
 
-                    <div className="h-48 bg-bg-primary/50 relative overflow-hidden flex items-center justify-center group-hover:bg-brand-subtle transition-colors duration-700">
-                      <div className="absolute inset-0 bg-gradient-to-t from-bg-secondary via-transparent to-transparent z-10"></div>
-                      <span className="font-display text-5xl font-black text-white absolute select-none opacity-[0.03] uppercase -rotate-12 scale-150 transition-all duration-700 group-hover:scale-175 group-hover:opacity-[0.07] group-hover:text-brand-primary">
+                    <div className="h-48 bg-bg-primary/50 relative overflow-hidden flex items-center justify-center group-hover:bg-brand-subtle transition-all duration-700">
+                      {/* Game Cover Image */}
+                      {t_item.games?.cover_url && (
+                        <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity duration-700">
+                          <Image
+                            src={
+                              t_item.games.cover_url.startsWith("http")
+                                ? t_item.games.cover_url
+                                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/game-assets/${t_item.games.cover_url}`
+                            }
+                            alt=""
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                          />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-bg-secondary via-bg-secondary/40 to-transparent z-10"></div>
+                      <span className="font-display text-5xl font-black text-white absolute select-none opacity-[0.03] uppercase -rotate-12 scale-150 transition-all duration-700 group-hover:scale-175 group-hover:opacity-[0.07] group-hover:text-brand-primary z-20">
                         {t_item.games?.name || "CUSTOM GAME"}
                       </span>
-                      <Trophy className="h-16 w-16 text-brand-primary opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
+                      <Trophy className="h-16 w-16 text-brand-primary opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 z-20 drop-shadow-[0_0_20px_rgba(244,0,9,0.5)]" />
                     </div>
 
                     <div className="p-8 lg:p-10 flex-1 flex flex-col min-w-0">

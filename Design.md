@@ -265,11 +265,15 @@ text┌────────────────────────�
 │ h4       │ 20     │ 600    │ 1.4      │  0       │ Sub-sections     │
 │ body-lg  │ 18     │ 400    │ 1.6      │  0       │ Featured text    │
 │ body     │ 16     │ 400    │ 1.6      │  0       │ Default body     │
-│ body-sm  │ 14     │ 400    │ 1.5      │  0       │ Secondary text   │
-│ caption  │ 12     │ 500    │ 1.4      │ 0.02em   │ Labels, metadata │
-│ overline │ 11     │ 600    │ 1.4      │ 0.08em   │ Category labels  │
-│ mono     │ 14     │ 400    │ 1.6      │  0       │ Code, IDs        │
+│ body-md  │ 15     │ 400    │ 1.5      │  0       │ Minimum UI text  │
+│ caption  │ 13     │ 500    │ 1.4      │ 0.02em   │ Labels, metadata │
+│ overline │ 12     │ 600    │ 1.4      │ 0.08em   │ Category labels  │
 └──────────┴────────┴────────┴──────────┴──────────┴──────────────────┘
+
+> [!IMPORTANT]
+> **Typography Rule:** DO NOT use `text-sm` (14px) for any primary UI labels or body content.
+> For Thai language support, the minimum size must be `text-base` (16px) or `text-md` (~15-16px).
+> Smaller sizes (caption/overline) are strictly for non-critical metadata.
 ```
 
 ### 3.3 Thai Text Adjustments

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,7 +13,16 @@ interface ModalProps {
   children?: React.ReactNode;
   footer?: React.ReactNode;
   variant?: "default" | "destructive" | "success";
+  size?: "sm" | "default" | "lg" | "xl" | "full";
 }
+
+const sizeClasses = {
+  sm: "max-w-sm",
+  default: "max-w-lg",
+  lg: "max-w-2xl",
+  xl: "max-w-[1200px]",
+  full: "max-w-[95vw]",
+};
 
 export function PremiumModal({
   isOpen,
@@ -22,13 +32,16 @@ export function PremiumModal({
   children,
   footer,
   variant = "default",
+  size = "default",
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
+    if (!mounted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMounted(true);
+    }
+  }, [mounted]);
 
   useEffect(() => {
     if (isOpen) {
@@ -59,7 +72,12 @@ export function PremiumModal({
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-lg bg-[#0c0c0e] border border-white/5 rounded-3xl shadow-[0_32px_64px_rgba(0,0,0,0.8)] overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+      <div
+        className={cn(
+          "relative w-full bg-[#0c0c0e] border border-white/5 rounded-3xl shadow-[0_32px_64px_rgba(0,0,0,0.8)] overflow-hidden animate-in slide-in-from-bottom-8 duration-500",
+          sizeClasses[size],
+        )}
+      >
         {/* Glow Accent Top */}
         <div
           className="absolute top-0 left-0 right-0 h-[2px] opacity-50"
@@ -68,17 +86,17 @@ export function PremiumModal({
           }}
         ></div>
 
-        <div className="p-10 text-center">
+        <div className="p-8 sm:p-10">
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-text-tertiary hover:bg-white/10 hover:text-white transition-all"
+            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-text-tertiary hover:bg-white/10 hover:text-white transition-all z-10"
           >
             <X className="h-4 w-4" />
           </button>
 
           {/* Header */}
-          <div className="mb-8 flex flex-col items-center">
+          <div className="mb-8 flex flex-col">
             <div
               className="w-12 h-1 mb-6 rounded-full opacity-30"
               style={{ backgroundColor: accentColor }}
@@ -94,12 +112,12 @@ export function PremiumModal({
           </div>
 
           {/* Content */}
-          <div className="font-body text-[15px] text-text-secondary leading-relaxed mb-10">
+          <div className="font-body text-[15px] text-text-secondary leading-relaxed">
             {children}
           </div>
 
           {/* Footer */}
-          {footer && <div className="flex flex-col gap-3">{footer}</div>}
+          {footer && <div className="mt-8 flex flex-col gap-3">{footer}</div>}
         </div>
 
         {/* Inner Border Light Effect */}

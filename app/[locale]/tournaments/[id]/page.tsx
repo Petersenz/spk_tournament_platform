@@ -55,7 +55,7 @@ export default async function PublicTournamentDetailPage({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "*, projects(name, logo_url), games(name, cover_url), tournament_platforms(platforms(name))",
+      "*, projects(name, logo_url), games(name, logo_url, cover_url), tournament_platforms(platforms(name))",
     )
     .eq("id", id)
     .single();
@@ -120,7 +120,7 @@ export default async function PublicTournamentDetailPage({
       <div className="relative min-h-[50vh] flex items-center justify-center overflow-hidden border-b border-white/5">
         {/* Background Cover */}
         {tournament.games?.cover_url && (
-          <div className="absolute inset-0 opacity-20 grayscale-[0.3] blur-[2px] scale-105">
+          <div className="absolute inset-0 opacity-25 grayscale-[0.1] scale-105">
             <Image
               src={
                 tournament.games.cover_url.startsWith("http")
@@ -130,36 +130,38 @@ export default async function PublicTournamentDetailPage({
               alt=""
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-cover object-[center_30%]"
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/80 to-transparent"></div>
           </div>
         )}
 
-        <div className="relative z-20 text-center max-w-6xl mx-auto px-4 animate-in fade-in zoom-in-95 duration-1000 py-20">
+        <div className="relative z-20 text-center max-w-[1600px] mx-auto px-6 lg:px-12 animate-in fade-in zoom-in-95 duration-1000 py-20">
           <div className="flex flex-col items-center gap-4">
             {/* Metadata Badges */}
             <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
-              <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2 rounded-xl">
-                <div className="h-5 w-5 rounded-full border border-white/20 overflow-hidden bg-white/5">
-                  {tournament.projects?.logo_url && (
+              {/* Game Badge with larger logo for clarity */}
+              <div className="flex items-center gap-4 bg-black/40 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl shadow-2xl hover:border-brand-primary/50 transition-all group/game">
+                <div className="h-10 w-24 relative flex items-center justify-center">
+                  {tournament.games?.logo_url ? (
                     <Image
-                      src={tournament.projects.logo_url}
-                      alt=""
+                      src={
+                        tournament.games.logo_url.startsWith("http")
+                          ? tournament.games.logo_url
+                          : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/game-assets/${tournament.games.logo_url}`
+                      }
+                      alt={tournament.games.name}
                       fill
-                      sizes="20px"
-                      className="object-cover"
+                      className="object-contain"
+                      quality={100}
                     />
+                  ) : (
+                    <Zap className="h-5 w-5 text-brand-primary" />
                   )}
                 </div>
-                <span className="text-[10px] text-text-tertiary font-black uppercase tracking-widest">
-                  {tournament.projects?.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 bg-brand-primary/10 backdrop-blur-md border border-brand-primary/20 px-4 py-2 rounded-xl">
-                <Zap className="h-3 w-3 text-brand-primary" />
-                <span className="text-[10px] text-brand-primary font-black uppercase tracking-widest">
+                <div className="w-[1px] h-6 bg-white/20"></div>
+                <span className="text-xs text-white font-black uppercase tracking-[0.2em]">
                   {tournament.games?.name}
                 </span>
               </div>
@@ -186,7 +188,7 @@ export default async function PublicTournamentDetailPage({
         </div>
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-6 lg:px-12 mt-12 lg:mt-20 relative z-30">
+      <main className="max-w-[1600px] mx-auto px-6 lg:px-12 mt-12 lg:mt-20 relative z-30">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* LEFT: CONTENT (Overview, Brackets, Rules, Prizes) */}
           <div className="lg:col-span-8 space-y-10">

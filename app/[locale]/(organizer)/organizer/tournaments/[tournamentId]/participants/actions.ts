@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { Player, Participant } from "./types";
 
 interface ActionResult {
   success?: boolean;
@@ -204,7 +205,7 @@ export async function updateParticipantFull(
 export async function savePlayer(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
   const id = formData.get("id") as string;
-  const participantId = formData.get("participant_id") as string;
+  const participant_id = formData.get("participant_id") as string;
   const tournamentId = formData.get("tournament_id") as string;
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -230,7 +231,7 @@ export async function savePlayer(formData: FormData): Promise<ActionResult> {
     if (error) return { error: error.message };
   } else {
     const { error } = await supabase.from("players").insert({
-      participant_id: participantId,
+      participant_id,
       name,
       email,
       custom_user_identifier,
@@ -239,6 +240,76 @@ export async function savePlayer(formData: FormData): Promise<ActionResult> {
       position: isNaN(position) ? null : position,
     });
     if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
+}
+
+export async function syncRoster(
+  participantId: string,
+  tournamentId: string,
+  participantData: Partial<Participant>,
+  playersData: Partial<Player>[],
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  // 1. Update Participant
+  const { error: partError } = await supabase
+    .from("participants")
+    .update(participantData)
+    .eq("id", participantId);
+
+  if (partError) return { error: partError.message };
+
+  // 2. Sync Players
+  // We'll do this in a simple way: update existing by ID, or insert new ones
+  for (const playerData of playersData) {
+    if (playerData.id) {
+      const { id, ...updateData } = playerData;
+      await supabase.from("players").update(updateData).eq("id", id);
+    } else if (playerData.name) {
+      await supabase.from("players").insert({
+        ...playerData,
+        participant_id: participantId,
+      });
+    }
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
+}
+
+export async function addManualParticipantFull(
+  tournamentId: string,
+  participantData: Partial<Participant>,
+  playersData: Partial<Player>[],
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  // 1. Insert Participant
+  const { data: part, error: partError } = await supabase
+    .from("participants")
+    .insert({
+      ...participantData,
+      tournament_id: tournamentId,
+      status: "approved", // Manual additions are approved by default
+    })
+    .select()
+    .single();
+
+  if (partError) return { error: partError.message };
+
+  // 2. Insert Players
+  if (playersData.length > 0) {
+    const playersToInsert = playersData.map((p) => ({
+      ...p,
+      participant_id: part.id,
+    }));
+    const { error: playersError } = await supabase
+      .from("players")
+      .insert(playersToInsert);
+    if (playersError) return { error: playersError.message };
   }
 
   revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);

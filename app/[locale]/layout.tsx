@@ -38,6 +38,8 @@ export async function generateMetadata({
   };
 }
 
+import { Toaster } from "sonner";
+
 export default async function LocaleLayout({
   children,
   params,
@@ -61,6 +63,7 @@ export default async function LocaleLayout({
       <body className="antialiased font-display bg-background text-foreground">
         <NextIntlClientProvider messages={messages}>
           {children}
+          <Toaster position="top-center" richColors theme="dark" />
         </NextIntlClientProvider>
       </body>
     </html>

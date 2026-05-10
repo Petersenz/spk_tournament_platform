@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Users,
   Trophy,
@@ -14,29 +14,29 @@ import {
   ArrowUpDown,
   Calendar,
   User,
+  Plus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DeleteParticipantButton } from "./DeleteParticipantButton";
 import { deleteMultipleParticipants } from "./actions";
 import { useRouter } from "next/navigation";
 import { PremiumModal } from "@/components/ui/PremiumModal";
-import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { ParticipantEditModal } from "./ParticipantEditModal";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import { Participant } from "./types";
+import { Link } from "@/lib/i18n/routing";
+import { Button } from "@/components/ui/button";
 
 export function ParticipantsTable({
   participants,
   tournamentId,
   tournamentSize,
-  pendingCount = 0,
+  teamMaxPlayers = 5,
 }: {
   participants: Participant[];
   tournamentId: string;
   tournamentSize: number;
-  pendingCount?: number;
+  teamMaxPlayers?: number;
 }) {
   const t = useTranslations("Organizer.participants.table");
   const delT = useTranslations("Organizer.participants.delete_confirm");
@@ -55,6 +55,21 @@ export function ParticipantsTable({
 
   const router = useRouter();
 
+  useEffect(() => {
+    if (editingParticipant) {
+      const freshData = participants.find(
+        (p) => p.id === editingParticipant.id,
+      );
+      if (
+        freshData &&
+        JSON.stringify(freshData) !== JSON.stringify(editingParticipant)
+      ) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setEditingParticipant(freshData);
+      }
+    }
+  }, [participants, editingParticipant, setEditingParticipant]);
+
   const handleRefresh = () => {
     setRefreshing(true);
     router.refresh();
@@ -63,8 +78,6 @@ export function ParticipantsTable({
 
   const filteredAndSortedParticipants = useMemo(() => {
     let result = [...participants];
-
-    // Filter
     if (searchTerm) {
       result = result.filter(
         (p) =>
@@ -74,8 +87,6 @@ export function ParticipantsTable({
             .includes(searchTerm.toLowerCase()),
       );
     }
-
-    // Sort
     result.sort((a, b) => {
       if (sortBy === "name") {
         return sortOrder === "asc"
@@ -91,7 +102,6 @@ export function ParticipantsTable({
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       }
     });
-
     return result;
   }, [participants, searchTerm, sortBy, sortOrder]);
 
@@ -116,7 +126,6 @@ export function ParticipantsTable({
     const formData = new FormData();
     formData.append("participant_ids", JSON.stringify(selectedIds));
     formData.append("tournament_id", tournamentId);
-
     try {
       await deleteMultipleParticipants(formData);
       setSelectedIds([]);
@@ -130,206 +139,183 @@ export function ParticipantsTable({
   };
 
   return (
-    <div className="flex flex-col">
-      {/* HEADER */}
-      <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-        <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white flex items-center gap-4">
-          {t("title")}
-          {pendingCount > 0 && (
-            <span className="text-xs bg-brand-primary text-white px-3 py-1 rounded-full font-black animate-pulse">
-              {pendingCount} {t("pending_label")}
-            </span>
-          )}
-        </h2>
-
-        <div className="flex items-center gap-6">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-white transition-all disabled:opacity-50"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`}
-            />
-            {refreshing ? t("refreshing") : t("refresh")}
-          </button>
-          <button
-            onClick={() => setIsFilterVisible(!isFilterVisible)}
-            className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${
-              isFilterVisible
-                ? "text-brand-primary"
-                : "text-text-tertiary hover:text-white"
-            }`}
-          >
-            <Filter className="h-3.5 w-3.5" />{" "}
-            {isFilterVisible ? t("hide_filters") : t("show_filters")}
-          </button>
-        </div>
-      </div>
-
-      {/* FILTER PANEL */}
-      {isFilterVisible && (
-        <div className="p-8 border-b border-white/5 bg-white/[0.01] animate-in slide-in-from-top-2 duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-text-tertiary">
-                {t("search_placeholder")}
-              </label>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
-                <Input
-                  placeholder={t("search_placeholder")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-11 h-12 bg-white/5 border-white/5 rounded-xl text-sm font-bold text-white focus:ring-brand-primary"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-text-tertiary">
-                {t("sort_by")}
-              </label>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setSortBy("name")}
-                  className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    sortBy === "name"
-                      ? "bg-brand-primary text-white"
-                      : "bg-white/5 text-text-tertiary hover:bg-white/10"
-                  }`}
-                >
-                  <User className="mr-2 h-3.5 w-3.5" /> {t("name")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setSortBy("date")}
-                  className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    sortBy === "date"
-                      ? "bg-brand-primary text-white"
-                      : "bg-white/5 text-text-tertiary hover:bg-white/10"
-                  }`}
-                >
-                  <Calendar className="mr-2 h-3.5 w-3.5" /> {t("created_at")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setSortBy("seed")}
-                  className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    sortBy === "seed"
-                      ? "bg-brand-primary text-white"
-                      : "bg-white/5 text-text-tertiary hover:bg-white/10"
-                  }`}
-                >
-                  <Trophy className="mr-2 h-3.5 w-3.5" /> {t("seed")}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-text-tertiary">
-                {t("order")}
-              </label>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setSortOrder("asc")}
-                  className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    sortOrder === "asc"
-                      ? "bg-brand-primary text-white"
-                      : "bg-white/5 text-text-tertiary hover:bg-white/10"
-                  }`}
-                >
-                  <ArrowUpDown className="mr-2 h-3.5 w-3.5" />{" "}
-                  {sortBy === "name" ? t("az") : t("oldest")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setSortOrder("desc")}
-                  className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    sortOrder === "desc"
-                      ? "bg-brand-primary text-white"
-                      : "bg-white/5 text-text-tertiary hover:bg-white/10"
-                  }`}
-                >
-                  <ArrowUpDown className="mr-2 h-3.5 w-3.5" />{" "}
-                  {sortBy === "name" ? t("za") : t("newest")}
-                </Button>
-              </div>
-            </div>
-          </div>
+    <div className="flex flex-col gap-8">
+      {/* SUCCESS MESSAGE AREA (IF NEEDED) */}
+      {participants.length === tournamentSize && (
+        <div className="p-4 bg-success-subtle border border-success/20 rounded-xl text-success font-bold text-base flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5" />
+          {t("full_message")}
         </div>
       )}
 
-      <div className="p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-4">
-            <div>
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-bg-secondary border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg">
+          <span className="text-4xl font-display font-black text-white mb-2">
+            {participants.length}
+          </span>
+          <span className="text-text-tertiary font-bold uppercase tracking-[0.1em] text-base">
+            {t("participants_label")}
+          </span>
+        </div>
+        <div className="bg-bg-secondary border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg">
+          <span className="text-4xl font-display font-black text-white mb-2">
+            {tournamentSize}
+          </span>
+          <span className="text-text-tertiary font-bold uppercase tracking-[0.1em] text-base">
+            {t("tournament_size_label")}
+          </span>
+        </div>
+      </div>
+
+      <div className="bg-bg-secondary border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+        {/* HEADER */}
+        <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 bg-white/[0.01]">
+          <div className="flex flex-col gap-1">
+            <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white flex items-center gap-4">
+              {t("list_title")}
+            </h2>
+            <div className="text-base font-bold text-text-tertiary">
               <span className="text-white">
-                {filteredAndSortedParticipants.length}{" "}
-                {t("player", { count: filteredAndSortedParticipants.length })}
+                {filteredAndSortedParticipants.length}
               </span>{" "}
               {t("out_of")} {tournamentSize}
             </div>
-            {selectedIds.length > 0 && (
-              <div className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-full flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>
-                  {selectedIds.length} {t("selected")}
-                </span>
-              </div>
-            )}
           </div>
 
-          {selectedIds.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowConfirm(true)}
-              className="bg-brand-primary text-white hover:bg-white hover:text-black px-6 h-10 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-[0_0_20px_rgba(244,0,9,0.2)] animate-in zoom-in-95"
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="h-12 px-5 flex items-center gap-2 text-base font-bold text-text-tertiary hover:text-white transition-all bg-white/5 rounded-xl border border-white/5"
             >
-              <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("delete_selected")}
-            </Button>
-          )}
+              <RefreshCw
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              {t("refresh")}
+            </button>
+            <button
+              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              className={`h-12 px-5 flex items-center gap-2 text-base font-bold transition-all rounded-xl border ${
+                isFilterVisible
+                  ? "bg-brand-primary/10 border-brand-primary text-brand-primary"
+                  : "bg-white/5 border-white/5 text-text-tertiary hover:text-white"
+              }`}
+            >
+              <Filter className="h-4 w-4" />
+              {t("show_filters")}
+            </button>
+            <Link
+              href={`/organizer/tournaments/${tournamentId}/participants/new`}
+            >
+              <Button className="h-12 px-6 bg-white text-black hover:bg-brand-primary hover:text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg flex items-center gap-2">
+                <Plus className="h-4 w-4" /> {common("add")}
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* FILTER PANEL */}
+        {isFilterVisible && (
+          <div className="p-8 border-b border-white/5 bg-white/[0.02] animate-in slide-in-from-top-2 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-3">
+                <label className="text-base font-bold text-text-tertiary uppercase tracking-wider">
+                  {t("search_placeholder")}
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-tertiary" />
+                  <Input
+                    placeholder={t("search_placeholder")}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 h-14 bg-white/5 border-white/10 rounded-xl text-base font-bold text-white focus:ring-brand-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-base font-bold text-text-tertiary uppercase tracking-wider">
+                  {t("sort_by")}
+                </label>
+                <div className="flex gap-2">
+                  {[
+                    { key: "name", icon: User, label: t("name") },
+                    { key: "date", icon: Calendar, label: t("created_at") },
+                    { key: "seed", icon: Trophy, label: t("seed") },
+                  ].map((item) => (
+                    <Button
+                      key={item.key}
+                      variant="ghost"
+                      onClick={() => setSortBy(item.key as typeof sortBy)}
+                      className={`flex-1 h-14 rounded-xl text-base font-bold transition-all ${
+                        sortBy === item.key
+                          ? "bg-brand-primary text-white shadow-lg"
+                          : "bg-white/5 text-text-tertiary hover:bg-white/10"
+                      }`}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" /> {item.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-base font-bold text-text-tertiary uppercase tracking-wider">
+                  {t("order")}
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                    }
+                    className="flex-1 h-14 rounded-xl text-base font-bold bg-white/5 text-text-tertiary hover:bg-white/10 border border-white/5"
+                  >
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    {sortOrder === "asc" ? t("asc") : t("desc")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="p-0 overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-xs font-black uppercase tracking-[0.2em] text-text-tertiary border-b border-white/5">
-                <th className="pb-6 px-4 w-12">
+              <tr className="text-base font-bold uppercase tracking-[0.1em] text-text-tertiary bg-white/[0.02]">
+                <th className="py-6 px-8 w-16">
                   <button
                     onClick={toggleSelectAll}
-                    className={`h-5 w-5 border rounded transition-all flex items-center justify-center ${
+                    className={`h-6 w-6 border-2 rounded-lg transition-all flex items-center justify-center ${
                       selectedIds.length ===
                         filteredAndSortedParticipants.length &&
                       filteredAndSortedParticipants.length > 0
-                        ? "bg-brand-primary border-brand-primary"
-                        : "border-white/20 bg-white/5 hover:border-white/40"
+                        ? "bg-brand-primary border-brand-primary shadow-lg shadow-brand-primary/30"
+                        : "border-white/10 bg-white/5 hover:border-white/30"
                     }`}
                   >
                     {selectedIds.length ===
                       filteredAndSortedParticipants.length &&
                       filteredAndSortedParticipants.length > 0 && (
-                        <div className="h-2 w-2 bg-white rounded-sm" />
+                        <div className="h-2.5 w-2.5 bg-white rounded-sm" />
                       )}
                   </button>
                 </th>
-                <th className="pb-6 px-4">{t("name")}</th>
-                <th className="pb-6 px-4">{t("email")}</th>
-                <th className="pb-6 px-4">{t("seed")}</th>
-                <th className="pb-6 px-4 text-right">{t("created_at")}</th>
-                <th className="pb-6 px-4 w-10 text-right"></th>
+                <th className="py-6 px-4">{t("name")}</th>
+                <th className="py-6 px-4">{t("email")}</th>
+                <th className="py-6 px-4 text-right">{t("created_at")}</th>
+                <th className="py-6 px-8 w-16"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.03]">
               {filteredAndSortedParticipants.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-30">
-                      <Users className="h-12 w-12" />
-                      <span className="font-black uppercase tracking-widest text-sm">
+                  <td colSpan={5} className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-6 opacity-20">
+                      <Users className="h-16 w-16" />
+                      <span className="font-black uppercase tracking-[0.2em] text-base">
                         {t("no_participants")}
                       </span>
                     </div>
@@ -339,129 +325,94 @@ export function ParticipantsTable({
                 filteredAndSortedParticipants.map((p) => {
                   const isSelected = selectedIds.includes(p.id);
                   const playerNames = p.players
-                    ?.map((pl) => pl.name)
+                    ?.sort((a, b) => (a.position || 99) - (b.position || 99))
+                    .map((pl) => pl.name)
                     .join(", ");
+
                   return (
                     <tr
                       key={p.id}
                       onClick={() => toggleSelect(p.id)}
-                      className={`group transition-colors cursor-pointer ${
+                      className={`group transition-all cursor-pointer border-l-4 ${
                         isSelected
-                          ? "bg-brand-primary/[0.03]"
-                          : "hover:bg-white/[0.02]"
+                          ? "bg-brand-primary/[0.05] border-brand-primary"
+                          : "hover:bg-white/[0.02] border-transparent"
                       }`}
                     >
                       <td
-                        className="py-6 px-4"
+                        className="py-8 px-8"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={() => toggleSelect(p.id)}
-                          className={`h-5 w-5 border rounded transition-all flex items-center justify-center ${
+                          className={`h-6 w-6 border-2 rounded-lg transition-all flex items-center justify-center ${
                             isSelected
-                              ? "bg-brand-primary border-brand-primary"
-                              : "border-white/20 bg-white/5 group-hover:border-brand-primary/50"
+                              ? "bg-brand-primary border-brand-primary shadow-lg"
+                              : "border-white/10 bg-white/5 group-hover:border-brand-primary/40"
                           }`}
                         >
                           {isSelected && (
-                            <div className="h-2 w-2 bg-white rounded-sm" />
+                            <div className="h-2.5 w-2.5 bg-white rounded-sm" />
                           )}
                         </button>
                       </td>
-                      <td className="py-6 px-4">
-                        <div className="flex items-center gap-5">
-                          <div
-                            className={`h-14 w-14 rounded-2xl bg-white/[0.03] border flex items-center justify-center overflow-hidden shrink-0 transition-all duration-500 shadow-lg ${
-                              isSelected
-                                ? "border-brand-primary/50"
-                                : "border-white/10 group-hover:border-brand-primary/30"
-                            }`}
-                          >
+                      <td className="py-8 px-4">
+                        <div className="flex items-center gap-6">
+                          <div className="h-16 w-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300 relative">
                             {p.logo_url ? (
                               <Image
                                 src={p.logo_url}
                                 alt={p.name}
                                 fill
-                                sizes="56px"
                                 className="object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-brand-primary/20 to-transparent flex items-center justify-center">
-                                <Trophy
-                                  className={`h-6 w-6 transition-colors duration-500 ${
-                                    isSelected
-                                      ? "text-brand-primary"
-                                      : "text-brand-primary/40 group-hover:text-brand-primary"
-                                  }`}
-                                />
-                              </div>
+                              <Trophy className="h-7 w-7 text-brand-primary/40" />
                             )}
                           </div>
-                          <div className="flex flex-col gap-0.5">
-                            <span
-                              className={`text-[17px] font-black uppercase tracking-tight leading-tight transition-colors ${
-                                isSelected
-                                  ? "text-brand-primary"
-                                  : "text-white group-hover:text-brand-primary"
-                              }`}
-                            >
-                              {p.name}
-                            </span>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl font-black uppercase tracking-tight text-white group-hover:text-brand-primary transition-colors">
+                                {p.name}
+                              </span>
+                              {p.seed && (
+                                <span className="bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded text-xs font-black">
+                                  #{p.seed}
+                                </span>
+                              )}
+                            </div>
                             {playerNames && (
-                              <span className="text-xs text-text-tertiary font-medium line-clamp-1 max-w-[400px]">
+                              <span className="text-base text-text-tertiary font-medium line-clamp-1 max-w-[500px]">
                                 {playerNames}
                               </span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="py-6 px-4">
-                        <span
-                          className={`text-sm font-medium transition-colors ${
-                            isSelected
-                              ? "text-white"
-                              : "text-text-secondary group-hover:text-white"
-                          }`}
-                        >
+                      <td className="py-8 px-4">
+                        <span className="text-base font-bold text-text-secondary group-hover:text-white transition-colors">
                           {p.main_contact_email || "—"}
                         </span>
                       </td>
-                      <td className="py-6 px-4">
-                        <div
-                          className={`inline-flex items-center justify-center h-8 min-w-[32px] px-2 rounded-lg text-xs font-black tabular-nums transition-all ${
-                            p.seed
-                              ? "bg-brand-primary/10 text-brand-primary border border-brand-primary/20"
-                              : "bg-white/5 text-text-tertiary border border-white/5"
-                          }`}
-                        >
-                          {p.seed ? `#${p.seed}` : "—"}
-                        </div>
-                      </td>
-                      <td className="py-6 px-4 text-right">
-                        <span className="text-xs font-bold text-text-tertiary tabular-nums uppercase">
+                      <td className="py-8 px-4 text-right">
+                        <span className="text-base font-bold text-text-tertiary tabular-nums uppercase">
                           {new Date(p.created_at).toLocaleDateString(locale, {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
                           })}
                         </span>
                       </td>
                       <td
-                        className="py-6 px-4 text-right"
+                        className="py-8 px-8 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <DeleteParticipantButton
-                            participantId={p.id}
-                            tournamentId={tournamentId}
-                          />
+                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setEditingParticipant(p)}
-                            className="h-10 w-10 text-text-tertiary hover:text-white"
+                            className="h-12 w-12 bg-white/5 hover:bg-white/10 rounded-xl text-text-tertiary hover:text-white"
                           >
                             <MoreVertical className="h-5 w-5" />
                           </Button>
@@ -473,6 +424,20 @@ export function ParticipantsTable({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* FOOTER ACTIONS */}
+        <div className="p-8 border-t border-white/5 bg-white/[0.01] flex justify-end">
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowConfirm(true)}
+              className="h-14 px-8 bg-brand-primary text-white hover:bg-white hover:text-black rounded-2xl font-black uppercase tracking-widest text-base transition-all shadow-xl shadow-brand-primary/20"
+            >
+              <Trash2 className="mr-3 h-5 w-5" /> {t("delete_selected")} (
+              {selectedIds.length})
+            </Button>
+          )}
         </div>
       </div>
 
@@ -506,15 +471,19 @@ export function ParticipantsTable({
           </div>
         }
       >
-        <p className="text-sm">{delT("desc", { count: selectedIds.length })}</p>
+        <p className="text-base text-text-secondary">
+          {delT("desc", { count: selectedIds.length })}
+        </p>
       </PremiumModal>
 
       {editingParticipant && (
         <ParticipantEditModal
+          key={editingParticipant.id}
           participant={editingParticipant}
           tournamentId={tournamentId}
           isOpen={!!editingParticipant}
           onClose={() => setEditingParticipant(null)}
+          teamMaxPlayers={teamMaxPlayers}
         />
       )}
     </div>

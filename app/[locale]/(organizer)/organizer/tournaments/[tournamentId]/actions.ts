@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateSingleElimination } from "@/lib/bracket-engine/single-elimination";
 import { generateRoundRobin } from "@/lib/bracket-engine/round-robin";
+import { getTranslations } from "next-intl/server";
 
 interface ActionResult {
   success?: boolean;
@@ -27,8 +28,9 @@ export async function generateBracket(
       .eq("status", "approved");
 
     if (!participants || participants.length < 2) {
+      const t = await getTranslations("Organizer.participants");
       return {
-        error: "Need at least 2 approved participants to generate a bracket",
+        error: t("bracket_min_participants_error"),
       };
     }
 

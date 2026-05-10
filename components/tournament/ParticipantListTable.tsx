@@ -41,6 +41,17 @@ export function ParticipantListTable({
     useState<ParticipantWithPlayers[]>(initialParticipants);
   const supabase = createClient();
 
+  // Sync state with server-provided props when they change (e.g. after router.refresh())
+  useEffect(() => {
+    if (
+      initialParticipants.length > 0 &&
+      JSON.stringify(initialParticipants) !== JSON.stringify(participants)
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setParticipants(initialParticipants);
+    }
+  }, [initialParticipants, participants]);
+
   useEffect(() => {
     const fetchParticipants = async () => {
       const { data } = await supabase

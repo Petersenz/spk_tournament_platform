@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/lib/i18n/routing";
 import { Users, ShieldCheck, Clock, UserCheck } from "lucide-react";
-import { AddParticipantModal } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/AddParticipantModal";
 import { ParticipantsTable } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/ParticipantsTable";
 import { RegistrationsList } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/RegistrationsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -88,10 +87,13 @@ export default async function TournamentParticipantsPage({
         </div>
 
         <div className="flex items-center gap-3">
-          <AddParticipantModal
-            tournamentId={tournamentId}
-            participantType={tournament.participant_type}
-          />
+          <Link
+            href={`/organizer/tournaments/${tournamentId}/participants/new`}
+            className="h-14 px-10 bg-white text-black hover:bg-brand-primary hover:text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-2xl flex items-center gap-3 group"
+          >
+            <Users className="h-5 w-5 transition-transform group-hover:scale-110" />
+            {t("add_button")}
+          </Link>
         </div>
       </div>
 
@@ -179,6 +181,7 @@ export default async function TournamentParticipantsPage({
               tournamentId={tournamentId}
               tournamentSize={tournament.size}
               pendingCount={pendingCount}
+              teamMaxPlayers={tournament.team_max_players || 5}
             />
           </div>
         </TabsContent>

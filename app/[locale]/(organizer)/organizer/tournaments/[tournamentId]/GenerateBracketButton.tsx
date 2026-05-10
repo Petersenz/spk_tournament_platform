@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { generateBracket } from "./actions";
 import { Loader2, Play } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 
 function SubmitButton({ hasMatches }: { hasMatches: boolean }) {
   const { pending } = useFormStatus();
@@ -40,13 +40,10 @@ export function GenerateBracketButton({
   stageId: string;
   hasMatches: boolean;
 }) {
-  const [error, setError] = useState<string | null>(null);
-
   async function handleAction(formData: FormData) {
-    setError(null);
     const result = await generateBracket(formData);
     if (result?.error) {
-      setError(result.error);
+      toast.error(result.error);
     }
   }
 
@@ -61,11 +58,6 @@ export function GenerateBracketButton({
         <input type="hidden" name="stage_id" value={stageId} />
         <SubmitButton hasMatches={hasMatches} />
       </form>
-      {error && (
-        <p className="text-[10px] font-black uppercase text-brand-primary bg-brand-primary/10 px-3 py-1 rounded-lg animate-shake">
-          Error: {error}
-        </p>
-      )}
     </div>
   );
 }

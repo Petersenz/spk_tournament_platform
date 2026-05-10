@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Plus, Loader2, UserPlus, Check } from "lucide-react";
 import { PremiumModal } from "@/components/ui/PremiumModal";
 import { addManualParticipant } from "./actions";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/lib/i18n/routing";
 import { useTranslations } from "next-intl";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function AddParticipantModal({
   tournamentId,
@@ -154,6 +156,17 @@ export function AddParticipantModal({
                   </>
                 )}
               </Button>
+
+              <Link
+                href={`/organizer/tournaments/${tournamentId}/participants/new`}
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-14 rounded-2xl border-white/10 hover:bg-white/5 text-xs font-black uppercase tracking-widest flex items-center justify-center",
+                )}
+              >
+                {t("title")} (Advanced)
+              </Link>
+
               <Button
                 type="button"
                 variant="ghost"

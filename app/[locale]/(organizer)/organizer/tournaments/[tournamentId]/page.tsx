@@ -190,18 +190,6 @@ export default async function TournamentDashboardPage({
                 </Button>
               </Link>
               <DeleteTournamentButton tournamentId={tournamentId} />
-              <Link
-                href={`/organizer/tournaments/${tournament.id}/participants`}
-              >
-                <Button className="h-12 lg:h-16 px-8 lg:px-10 rounded-2xl bg-brand-primary text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest text-[10px] lg:text-xs shadow-[0_0_30px_rgba(244,0,9,0.4)] relative group transition-all">
-                  {t("manage_entries")}
-                  {registrationCount ? (
-                    <span className="absolute -top-3 -right-3 h-8 w-8 bg-white text-brand-primary rounded-full flex items-center justify-center font-bold text-xs shadow-2xl animate-bounce">
-                      {registrationCount}
-                    </span>
-                  ) : null}
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -219,10 +207,15 @@ export default async function TournamentDashboardPage({
             </Link>
             <Link
               href={`/organizer/tournaments/${tournament.id}/participants`}
-              className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.8rem] text-text-tertiary hover:text-white hover:bg-white/5 font-bold uppercase tracking-widest text-xs transition-all group"
+              className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.8rem] text-text-tertiary hover:text-white hover:bg-white/5 font-bold uppercase tracking-widest text-xs transition-all group relative"
             >
               <Users className="h-4 w-4 group-hover:text-brand-primary transition-colors" />{" "}
               {t("manage_entries")} ({participantCount || 0})
+              {!!registrationCount && (
+                <span className="absolute -top-2 -right-2 h-6 w-6 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold text-[10px] shadow-lg animate-pulse border-2 border-[#0c0c0e]">
+                  {registrationCount}
+                </span>
+              )}
             </Link>
             <Link
               href={`/tournaments/${tournament.id}`}

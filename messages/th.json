@@ -60,7 +60,8 @@
     "search_placeholder": "ค้นหาทัวร์นาเมนต์...",
     "status_registration_open": "เปิดรับสมัคร",
     "status_in_progress": "กำลังแข่งขัน",
-    "status_completed": "จบการแข่งขัน"
+    "status_completed": "จบการแข่งขัน",
+    "hosted_by": "จัดโดย"
   },
   "Games": {
     "title": "สมรภูมิการแข่งขัน",
@@ -110,7 +111,7 @@
       "tournaments": "ทัวร์นาเมนต์",
       "participants": "รายชื่อผู้สมัครทั้งหมด",
       "settings": "ตั้งค่า",
-      "hub": "ศูนย์กลางผู้จัดการ"
+      "hub": "ศูนย์กลางผู้จัดการแข่งขัน"
     },
     "dashboard": {
       "title": "ศูนย์จัดการแข่งขัน",
@@ -181,11 +182,17 @@
         "order": "ลำดับ",
         "az": "ก-ฮ",
         "za": "ฮ-ก",
+        "asc": "น้อยไปมาก",
+        "desc": "มากไปน้อย",
         "oldest": "เก่าสุด",
         "newest": "ใหม่สุด",
-        "selected": "เลือกแล้ว",
-        "pending_label": "รอดำเนินการ",
-        "out_of": "จากทั้งหมด"
+        "selected": "รายการที่เลือก",
+        "pending_label": "รอการอนุมัติ",
+        "out_of": "จาก",
+        "participants_label": "จำนวนผู้แข่ง",
+        "tournament_size_label": "ขนาดทัวร์นาเมนต์",
+        "list_title": "บัญชีรายชื่อนักแข่ง",
+        "full_message": "จำนวนผู้เข้าแข่งขันเต็มตามโควตาแล้ว"
       },
       "empty": "ไม่พบรายชื่อผู้เข้าแข่งขัน",
       "manage_tournament": "จัดการรายการแข่ง",
@@ -199,7 +206,8 @@
       "tab_requests": "คำขอเข้าร่วม",
       "realtime_status": "ระบบจัดการแบบเรียลไทม์",
       "manual_review": "ต้องตรวจสอบด้วยตนเอง",
-      "add_button": "เพิ่มผู้แข่ง",
+      "add_button": "เพิ่มผู้สมัคร",
+      "bracket_min_participants_error": "ต้องมีผู้เข้าแข่งขันที่ได้รับการยืนยันอย่างน้อย 2 รายการเพื่อสร้างสายการแข่งขัน",
       "add_modal": {
         "title": "ลงทะเบียนผู้เข้าแข่งขัน",
         "subtitle": "เพิ่มรายชื่อด้วยตนเอง",
@@ -216,28 +224,33 @@
       "edit_modal": {
         "title": "จัดการข้อมูลนักแข่ง",
         "description": "การจัดการบัญชีรายชื่อฝ่ายบริหาร",
-        "tab_general": "ข้อมูลทั่วไป",
-        "tab_roster": "รายชื่อสมาชิก",
-        "name_label": "ชื่อที่แสดง",
-        "email_label": "อีเมลติดต่อ",
+        "tab_general": "ข้อมูลพื้นฐาน",
+        "tab_roster": "สมาชิกทั้งหมด",
+        "tab_player": "ผู้เล่นที่ {number}",
+        "name_label": "ชื่อทีม",
+        "email_label": "อีเมลติดต่อหลัก",
         "seed_label": "หมายเลข Seed",
         "status_label": "สถานะ",
-        "id_label": "รหัสทีม/ผู้แข่ง",
+        "id_label": "รหัสผู้ใช้กำหนดเอง",
+        "team_id_label": "แท็กทีม",
         "type_label": "ประเภทผู้แข่ง",
-        "logo_label": "ลิงก์โลโก้",
-        "save_general": "บันทึกข้อมูลทั่วไป",
+        "logo_label": "โลโก้ทีม",
+        "save_all": "บันทึกรายชื่อทั้งหมด",
+        "save_general": "บันทึกการเปลี่ยนแปลง",
         "roster_empty": "ยังไม่มีสมาชิกในทีมนี้",
         "add_player": "เพิ่มสมาชิกใหม่",
         "edit_player": "แก้ไขสมาชิก: {name}",
         "player_name": "ชื่อผู้เล่น",
         "player_email": "อีเมลผู้เล่น",
-        "player_custom_id": "รหัสกำหนดเอง (PSN/Discord)",
-        "player_position": "ตำแหน่ง/บทบาท #",
+        "player_custom_id": "รหัสผู้ใช้กำหนดเอง",
+        "player_position": "ตำแหน่ง / บทบาท #",
         "player_captain": "สถานะหัวหน้าทีม",
         "player_add_btn": "เพิ่มเข้าสู่ทีม",
         "player_update_btn": "อัปเดตข้อมูลผู้เล่น",
         "remove_player_title": "ลบสมาชิก",
-        "remove_player_desc": "คุณแน่ใจหรือไม่ว่าต้องการลบผู้เล่นคนนี้ออกจากทีม? การกระทำนี้ไม่สามารถย้อนกลับได้"
+        "remove_player_desc": "คุณแน่ใจหรือไม่ว่าต้องการลบผู้เล่นคนนี้ออกจากทีม? การกระทำนี้ไม่สามารถย้อนกลับได้",
+        "captain_switched": "เปลี่ยนสถานะกัปตันทีมเป็น {name} แล้ว",
+        "cancel_btn": "ยกเลิก"
       },
       "requests": {
         "empty_title": "ไม่มีคำขอที่ค้างอยู่",
@@ -419,6 +432,7 @@
     }
   },
   "Common": {
+    "add": "เพิ่ม",
     "loading": "กำลังโหลด...",
     "error": "เกิดข้อผิดพลาด",
     "save": "บันทึกข้อมูล",

@@ -1,0 +1,58 @@
+﻿
+> tournament_platform@0.1.0 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90mC:/Users/PETERSEN VICTUS 16/Documents/Antigravity/tournament_platform[39m
+
+ [31mÔØ»[39m lib/bracket-engine/__tests__/double-elimination.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [32mÔ£ô[39m lib/bracket-engine/__tests__/single-elimination-byes.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m lib/bracket-engine/__tests__/single-elimination.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m lib/bracket-engine/__tests__/round-robin.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m __tests__/i18n.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m components/ui/__tests__/PremiumModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 375[2mms[22m[39m
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\PETERSEN VICTUS 16\App ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m[1m[41m Failed Suites 1 [49m[22m[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m
+
+[41m[1m FAIL [22m[49m lib/bracket-engine/__tests__/double-elimination.test.ts[2m [ 
+lib/bracket-engine/__tests__/double-elimination.test.ts ][22m
+[31m[1mError[22m: Failed to resolve import "../double-elimination" from 
+"lib/bracket-engine/__tests__/double-elimination.test.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/PETERSEN VICTUS 
+16/Documents/Antigravity/tournament_platform/lib/bracket-engine/__tests__/double-elimination.test.ts[39m:2:0
+[33m  12 |  	})
+  13 |  })) }));
+  14 |  const __vi_import_0__ = await import("../double-elimination");
+     |                                       ^
+  15 |  import { describe, it, expect, vi } from "vitest";
+  16 |  [39m
+[90m [2mÔØ»[22m TransformPluginContext._formatLog ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tournamen
+t_platform/node_modules/vite/dist/node/chunks/node.js:[2m30390:39[22m[39m
+[90m [2mÔØ»[22m TransformPluginContext.error ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tournament_pla
+tform/node_modules/vite/dist/node/chunks/node.js:[2m30387:14[22m[39m
+[90m [2mÔØ»[22m normalizeUrl ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tournament_platform/node_modul
+es/vite/dist/node/chunks/node.js:[2m27651:18[22m[39m
+[90m [2mÔØ»[22m ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tournament_platform/node_modules/vite/dist/
+node/chunks/node.js:[2m27714:30[22m[39m
+[90m [2mÔØ»[22m TransformPluginContext.transform ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tournament
+_platform/node_modules/vite/dist/node/chunks/node.js:[2m27682:4[22m[39m
+[90m [2mÔØ»[22m EnvironmentPluginContainer.transform ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tourna
+ment_platform/node_modules/vite/dist/node/chunks/node.js:[2m30179:14[22m[39m
+[90m [2mÔØ»[22m loadAndTransform ../../../../PETERSEN%20VICTUS%2016/Documents/Antigravity/tournament_platform/node_m
+odules/vite/dist/node/chunks/node.js:[2m24509:26[22m[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/1]ÔÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m   Start at [22m 00:34:07
+[2m   Duration [22m 5.93s[2m (transform 993ms, setup 2.29s, import 1.70s, tests 420ms, environment 21.29s)[22m
+
