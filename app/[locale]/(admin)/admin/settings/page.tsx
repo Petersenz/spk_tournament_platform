@@ -23,10 +23,7 @@ export default async function AdminSettingsPage() {
   // Fetch settings from DB
   const { data: settings } = await supabase.from("system_settings").select("*");
 
-  const getSetting = (
-    key: string,
-    defaultValue: string | boolean | number,
-  ) => {
+  const getSetting = (key: string, defaultValue: string | boolean | number) => {
     const setting = settings?.find((s) => s.key === key);
     return setting ? setting.value : defaultValue;
   };

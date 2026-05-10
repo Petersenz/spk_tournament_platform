@@ -35,8 +35,8 @@ export function ApproveButton({
         setShowConfirm(false);
         router.refresh();
       }
-    } catch (err: any) {
-      setErrorMsg(err.message);
+    } catch (err: unknown) {
+      setErrorMsg((err as Error).message);
     } finally {
       setLoading(false);
     }

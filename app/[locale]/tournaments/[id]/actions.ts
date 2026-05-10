@@ -52,7 +52,7 @@ export async function joinTournament(tournamentId: string, teamName?: string) {
   const isAuto = tournament.registration_mode === "auto";
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nickname")
+    .select("nickname, custom_user_identifier, avatar_url")
     .eq("id", user.id)
     .single();
 
@@ -69,6 +69,8 @@ export async function joinTournament(tournamentId: string, teamName?: string) {
       user_id: user.id,
       name: participantName,
       main_contact_email: user.email,
+      custom_user_identifier: profile?.custom_user_identifier,
+      logo_url: profile?.avatar_url,
       status: isAuto ? "approved" : "pending",
       type: tournament.participant_type,
     })

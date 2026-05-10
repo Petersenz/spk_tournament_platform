@@ -10,9 +10,11 @@ import {
   Users,
   LogOut,
   ShieldCheck,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default async function OrganizerLayout({
   children,
@@ -31,7 +33,7 @@ export default async function OrganizerLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, nickname")
+    .select("role, nickname, avatar_url")
     .eq("id", user.id)
     .single();
 
@@ -49,6 +51,7 @@ export default async function OrganizerLayout({
                 src="/logo.png"
                 alt="Logo"
                 fill
+                sizes="48px"
                 className="object-contain"
                 priority
               />
@@ -83,6 +86,11 @@ export default async function OrganizerLayout({
               icon: Users,
               label: t("sidebar.participants"),
             },
+            {
+              href: "/organizer/settings",
+              icon: Settings,
+              label: t("sidebar.settings"),
+            },
           ].map((item) => (
             <Link key={item.href} href={item.href}>
               <div className="flex items-center px-4 h-12 rounded-xl text-sm font-bold uppercase tracking-widest transition-all hover:bg-white/5 text-text-secondary hover:text-white group">
@@ -95,28 +103,49 @@ export default async function OrganizerLayout({
 
         <div className="p-8 border-t border-white/5 shrink-0 bg-white/2">
           <div className="flex items-center justify-between">
-            <div className="truncate">
-              <div className="text-sm font-black text-white truncate uppercase tracking-tight flex items-center gap-2">
-                {profile.role === "admin" ? (
-                  <ShieldCheck className="h-3 w-3 text-brand-primary shrink-0" />
+            <div className="flex items-center gap-3 truncate">
+              <div className="h-10 w-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center font-black text-brand-primary overflow-hidden relative shrink-0">
+                {profile.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt="Avatar"
+                    fill
+                    sizes="40px"
+                    className="object-cover"
+                  />
                 ) : (
-                  <Trophy className="h-3 w-3 text-brand-primary shrink-0" />
+                  <span className="text-sm">
+                    {(profile.nickname?.[0] || user.email?.[0])?.toUpperCase()}
+                  </span>
                 )}
-                {profile.nickname}
               </div>
-              <div className="text-[10px] text-brand-primary font-bold truncate uppercase tracking-[0.2em] mt-1 opacity-80">
-                {profile.role === "admin" ? "Super Admin" : "Organizer Hub"}
+              <div className="truncate">
+                <div className="text-sm font-black text-white truncate uppercase tracking-tight flex items-center gap-2">
+                  {profile.role === "admin" ? (
+                    <ShieldCheck className="h-3 w-3 text-brand-primary shrink-0" />
+                  ) : (
+                    <Trophy className="h-3 w-3 text-brand-primary shrink-0" />
+                  )}
+                  {profile.nickname}
+                </div>
+                <div className="text-[10px] text-brand-primary font-bold truncate uppercase tracking-[0.2em] mt-1 opacity-80">
+                  {profile.role === "admin" ? "Super Admin" : "Organizer Hub"}
+                </div>
               </div>
             </div>
-            <form action="/auth/signout" method="post">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-text-tertiary hover:text-brand-primary transition-all hover:scale-125"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </form>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <form action="/api/auth/signout" method="POST">
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="text-text-tertiary hover:text-brand-primary transition-all hover:scale-125"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </aside>
@@ -129,6 +158,7 @@ export default async function OrganizerLayout({
                 src="/logo.png"
                 alt="Logo"
                 fill
+                sizes="40px"
                 className="object-contain"
               />
             </div>

@@ -49,7 +49,7 @@ export function JoinButton({
         setStatus("error");
         setMessage(result.error);
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setMessage("Something went wrong. Please try again.");
     } finally {

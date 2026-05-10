@@ -359,12 +359,13 @@ CREATE POLICY "Users register" ON registrations FOR INSERT WITH CHECK (auth.uid(
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, nickname, role, preferred_language)
+  INSERT INTO public.profiles (id, nickname, role, preferred_language, custom_user_identifier)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'nickname', 'User_' || substr(new.id::text, 1, 6)),
     COALESCE((new.raw_user_meta_data->>'role')::user_role, 'player'),
-    COALESCE(new.raw_user_meta_data->>'preferred_language', 'en')
+    COALESCE(new.raw_user_meta_data->>'preferred_language', 'en'),
+    new.raw_user_meta_data->>'custom_user_identifier'
   );
   RETURN new;
 END;

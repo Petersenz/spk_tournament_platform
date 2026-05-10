@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { Button } from "./button";
 
 interface ModalProps {
   isOpen: boolean;
@@ -26,7 +26,11 @@ export function PremiumModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -46,11 +50,11 @@ export function PremiumModal({
         ? "#10b981"
         : "#f40009";
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-[#050505]/95 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-[#050505]/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
@@ -95,16 +99,7 @@ export function PremiumModal({
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col gap-3">
-            {footer || (
-              <Button
-                onClick={onClose}
-                className="bg-brand-primary text-white hover:bg-white hover:text-black transition-all font-display font-bold uppercase tracking-widest h-14 rounded-2xl w-full"
-              >
-                Done
-              </Button>
-            )}
-          </div>
+          {footer && <div className="flex flex-col gap-3">{footer}</div>}
         </div>
 
         {/* Inner Border Light Effect */}
@@ -112,4 +107,6 @@ export function PremiumModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

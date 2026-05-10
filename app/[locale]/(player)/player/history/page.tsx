@@ -2,8 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { Link } from "@/lib/i18n/routing";
 import { History, Trophy, Swords, Calendar, Gamepad2 } from "lucide-react";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 
 export default async function PlayerHistoryPage() {
+  const t = await getTranslations("Player.history");
   const supabase = await createClient();
   const {
     data: { user },
@@ -51,10 +53,10 @@ export default async function PlayerHistoryPage() {
       <div className="relative">
         <div className="absolute -left-4 top-0 h-full w-1 bg-brand-primary rounded-full shadow-[0_0_15px_rgba(244,0,9,0.5)]"></div>
         <h1 className="font-display text-4xl font-black uppercase tracking-tighter text-white">
-          Match History
+          {t("title")}
         </h1>
         <p className="text-text-tertiary font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
-          Performance & Achievements
+          {t("subtitle")}
         </p>
       </div>
 
@@ -66,15 +68,14 @@ export default async function PlayerHistoryPage() {
               <History className="h-20 w-20 text-white/5 relative z-10 mx-auto" />
             </div>
             <h3 className="font-display text-2xl font-black uppercase tracking-tight text-white mb-3">
-              No battles recorded
+              {t("empty_title")}
             </h3>
             <p className="text-text-tertiary max-w-sm mx-auto font-medium leading-relaxed mb-10 text-sm">
-              Once you complete matches in tournaments, your performance data
-              will be analyzed and displayed here.
+              {t("empty_desc")}
             </p>
             <Link href="/tournaments">
               <span className="inline-flex items-center gap-2 bg-white/5 hover:bg-brand-primary px-8 py-4 rounded-2xl text-white font-bold uppercase tracking-widest text-[11px] transition-all shadow-xl">
-                Browse Tournaments <Swords className="h-4 w-4" />
+                {t("browse_btn")} <Swords className="h-4 w-4" />
               </span>
             </Link>
           </div>
@@ -209,7 +210,7 @@ export default async function PlayerHistoryPage() {
                             <Trophy className="h-6 w-6" />
                           </div>
                           <span className="text-[10px] font-black text-success uppercase tracking-[0.3em]">
-                            Victory
+                            {t("victory")}
                           </span>
                         </div>
                       ) : (
@@ -218,7 +219,7 @@ export default async function PlayerHistoryPage() {
                             <Swords className="h-6 w-6" />
                           </div>
                           <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em]">
-                            Defeat
+                            {t("defeat")}
                           </span>
                         </div>
                       )}

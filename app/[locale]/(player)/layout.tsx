@@ -4,14 +4,7 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Link } from "@/lib/i18n/routing";
 import { Button } from "@/components/ui/button";
-import {
-  Gamepad2,
-  History,
-  Settings,
-  Trophy,
-  ShieldCheck,
-  LogOut,
-} from "lucide-react";
+import { Gamepad2, History, Settings, ShieldCheck, LogOut } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 
@@ -80,6 +73,7 @@ export default async function PlayerLayout({
                         src={profile.avatar_url}
                         alt="Avatar"
                         fill
+                        sizes="48px"
                         className="object-cover"
                       />
                     ) : (
@@ -106,8 +100,9 @@ export default async function PlayerLayout({
                     </div>
                   </div>
                 </div>
-                <form action="/auth/signout" method="post">
+                <form action="/api/auth/signout" method="POST">
                   <Button
+                    type="submit"
                     variant="ghost"
                     size="icon"
                     className="text-text-tertiary hover:text-brand-primary transition-all hover:scale-125 ml-2"

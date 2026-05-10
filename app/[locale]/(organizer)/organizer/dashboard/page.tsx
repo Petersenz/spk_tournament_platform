@@ -134,36 +134,39 @@ export default async function OrganizerDashboard() {
             <div className="p-20 text-center text-text-tertiary">
               <Trophy className="mx-auto h-16 w-16 opacity-10 mb-6" />
               <p className="font-bold uppercase tracking-widest text-xs">
-                No tournaments found
+                {t("empty") || "No tournaments found"}
               </p>
             </div>
           ) : (
-            recentTournaments?.map((t) => (
+            recentTournaments?.map((tournament) => (
               <Link
-                key={t.id}
-                href={`/organizer/tournaments/${t.id}`}
+                key={tournament.id}
+                href={`/organizer/tournaments/${tournament.id}`}
                 className="block p-8 hover:bg-white/2 transition-all group"
               >
                 <div className="flex justify-between items-center">
                   <div className="space-y-1">
                     <div className="text-[10px] text-brand-primary font-black uppercase tracking-[0.2em]">
-                      {t.projects?.name}
+                      {tournament.projects?.name}
                     </div>
                     <div className="font-black text-xl text-white group-hover:text-brand-primary transition-colors uppercase tracking-tight">
-                      {t.name}
+                      {tournament.name}
                     </div>
                     <div className="text-[10px] text-text-tertiary uppercase font-bold tracking-widest mt-1">
-                      {t.games?.name} • {t.status}
+                      {tournament.games?.name} • {tournament.status}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-black text-white">
-                      {(t.participants as unknown as { count: number }[])?.[0]
-                        ?.count || 0}{" "}
-                      / {t.size}
+                      {(
+                        tournament.participants as unknown as {
+                          count: number;
+                        }[]
+                      )?.[0]?.count || 0}{" "}
+                      / {tournament.size}
                     </div>
                     <div className="text-[10px] text-text-tertiary uppercase font-black tracking-[0.2em]">
-                      Slots Filled
+                      {t("slots_filled")}
                     </div>
                   </div>
                 </div>

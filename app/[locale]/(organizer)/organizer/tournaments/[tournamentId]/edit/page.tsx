@@ -1,17 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Link } from "@/lib/i18n/routing";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-  SelectTrigger,
-} from "@/components/ui/select";
+import { TournamentForm } from "@/components/tournament/TournamentForm";
 import { updateTournament } from "../actions";
+import { Link } from "@/lib/i18n/routing";
+import { ChevronLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export default async function EditTournamentPage({
   params,
@@ -19,6 +12,7 @@ export default async function EditTournamentPage({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = await params;
+  const t = await getTranslations("Organizer.tournament_detail");
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,7 +20,7 @@ export default async function EditTournamentPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("*, projects(*)")
+    .select("*, projects(*), tournament_platforms(*)")
     .eq("id", tournamentId)
     .single();
 
@@ -34,108 +28,66 @@ export default async function EditTournamentPage({
     notFound();
   }
 
+  // Fetch games
+  const { data: gamesData } = await supabase
+    .from("games")
+    .select("id, name, cover_url")
+    .eq("is_active", true)
+    .order("name");
+
+  // Map to include full URLs for images
+  const games =
+    gamesData?.map((g) => ({
+      ...g,
+      cover_url: g.cover_url
+        ? g.cover_url.startsWith("http")
+          ? g.cover_url
+          : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/game-assets/${g.cover_url}`
+        : null,
+    })) || [];
+
+  // Fetch platforms
+  const { data: platforms } = await supabase
+    .from("platforms")
+    .select("id, name")
+    .order("name");
+
+  const initialPlatforms = (
+    tournament.tournament_platforms as { platform_id: string }[]
+  ).map((tp) => tp.platform_id);
+
+  // Wrap updateTournament to include the ID
+  const boundUpdateAction = async (formData: FormData) => {
+    "use server";
+    return updateTournament(tournamentId, formData);
+  };
+
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-20">
-      <div>
+    <div className="space-y-12 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4">
         <Link
           href={`/organizer/tournaments/${tournamentId}`}
-          className="text-sm text-text-tertiary hover:text-brand-primary"
+          className="text-xs font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand-primary flex items-center transition-colors"
         >
-          ← Back to Dashboard
+          <ChevronLeft className="mr-1 h-3 w-3" /> {t("back_to_dashboard")}
         </Link>
-        <h1 className="font-display text-3xl font-bold mt-4">
-          Edit Tournament Info
+        <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
+          {t("edit_title")}
         </h1>
+        <p className="text-text-secondary font-medium">
+          {t("edit_desc", { name: tournament.name })}
+        </p>
       </div>
 
-      <div className="bg-bg-secondary border border-white/5 rounded-[2rem] p-8 shadow-2xl">
-        <form
-          action={async (formData) => {
-            "use server";
-            await updateTournament(tournamentId, formData);
-          }}
-          className="space-y-6"
-        >
-          <div className="space-y-2">
-            <Label
-              htmlFor="name"
-              className="text-text-secondary uppercase text-[10px] font-black tracking-widest"
-            >
-              Tournament Name
-            </Label>
-            <Input
-              id="name"
-              name="name"
-              defaultValue={tournament.name}
-              required
-              className="bg-bg-tertiary border-white/5 h-12"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="status"
-              className="text-text-secondary uppercase text-[10px] font-black tracking-widest"
-            >
-              Status
-            </Label>
-            <Select name="status" defaultValue={tournament.status}>
-              <SelectTrigger className="bg-bg-tertiary border-white/5 h-12">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="registration_open">
-                  Registration Open
-                </SelectItem>
-                <SelectItem value="registration_closed">
-                  Registration Closed
-                </SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="description"
-              className="text-text-secondary uppercase text-[10px] font-black tracking-widest"
-            >
-              Description / Rules
-            </Label>
-            <textarea
-              id="description"
-              name="description"
-              rows={6}
-              defaultValue={tournament.description || ""}
-              className="w-full rounded-xl bg-bg-tertiary border border-white/5 p-4 text-sm focus:border-brand-primary outline-none transition-all custom-scrollbar"
-            />
-          </div>
-
-          <div className="pt-6 flex gap-4">
-            <Button
-              type="submit"
-              className="flex-1 h-14 bg-brand-primary text-white hover:bg-brand-hover font-bold uppercase tracking-widest text-xs rounded-xl"
-            >
-              Update Tournament
-            </Button>
-            <Link
-              href={`/organizer/tournaments/${tournamentId}`}
-              className="flex-1"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-14 border-white/5 font-bold uppercase tracking-widest text-xs rounded-xl"
-              >
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </form>
-      </div>
+      <TournamentForm
+        projectId={tournament.project_id}
+        games={games || []}
+        platforms={platforms || []}
+        initialData={tournament}
+        initialPlatforms={initialPlatforms}
+        submitAction={boundUpdateAction}
+        cancelHref={`/organizer/tournaments/${tournamentId}`}
+      />
     </div>
   );
 }

@@ -1,54 +1,87 @@
 import { ReactNode } from "react";
 import { Link } from "@/lib/i18n/routing";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#050505] p-4 overflow-hidden relative">
-      {/* Dynamic Background Effects */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-primary/10 rounded-full blur-[150px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-primary/5 rounded-full blur-[150px]"></div>
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
-      </div>
+  const t = useTranslations("Auth.layout");
 
-      <div className="w-full max-w-md space-y-10 relative z-10 animate-in fade-in zoom-in-95 duration-1000">
-        <div className="flex flex-col items-center gap-6">
-          <Link href="/" className="flex flex-col items-center gap-5 group">
-            <div className="relative h-24 w-24 transition-all duration-700 group-hover:scale-110 drop-shadow-[0_0_30px_rgba(155,27,48,0.8)]">
+  return (
+    <div className="flex min-h-screen bg-[#050505] overflow-hidden font-display">
+      {/* LEFT SIDE: VISUAL & IDENTITY (Hidden on Mobile, 2/5 on Desktop) */}
+      <div className="hidden lg:flex lg:w-2/5 relative flex-col items-center justify-center p-12 overflow-hidden border-r border-white/5">
+        {/* Generated Cinematic Background */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/esports_bg.png"
+            alt="Cinematic Background"
+            fill
+            sizes="100vw"
+            className="object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#050505]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/50 via-transparent to-[#050505]"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center text-center space-y-10 max-w-sm">
+          <Link href="/" className="group">
+            <div className="relative h-48 w-48 transition-all duration-700 group-hover:scale-110 drop-shadow-[0_0_50px_rgba(244,0,9,0.6)]">
               <Image
                 src="/logo.png"
                 alt="Logo"
                 fill
+                sizes="192px"
                 className="object-contain"
                 priority
               />
             </div>
-            <div className="text-center space-y-1">
-              <h1 className="font-display text-3xl font-black text-white uppercase tracking-tighter drop-shadow-2xl">
-                Samutprakan Esports
-              </h1>
-              <div className="flex items-center justify-center gap-3">
-                <span className="h-[1px] w-8 bg-brand-primary/50"></span>
-                <p className="text-[11px] text-brand-primary font-black uppercase tracking-[0.4em]">
-                  Association Portal
-                </p>
-                <span className="h-[1px] w-8 bg-brand-primary/50"></span>
-              </div>
-            </div>
           </Link>
-        </div>
+          <div className="space-y-4">
+            <p className="text-sm md:text-base text-text-tertiary font-medium uppercase tracking-[0.2em] leading-relaxed opacity-80 max-w-[320px] mx-auto text-balance">
+              {t("subtitle")}
+            </p>
+          </div>
 
-        <div className="bg-[#111111]/80 backdrop-blur-2xl border border-white/5 rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden">
-          <div className="p-1 bg-gradient-to-br from-white/10 to-transparent rounded-[2rem]">
-            <div className="bg-[#0c0c0e] rounded-[1.9rem] p-2">{children}</div>
+          <div className="flex gap-2">
+            {[1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className="h-1.5 w-1.5 rounded-full bg-brand-primary/30"
+              ></span>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="text-center">
-          <p className="text-[10px] text-text-tertiary uppercase font-bold tracking-widest">
-            Official Tournament Management System
-          </p>
+      {/* RIGHT SIDE: FORM (Full on Mobile, 3/5 on Desktop) */}
+      <div className="w-full lg:w-3/5 flex items-center justify-center p-4 md:p-12 relative overflow-y-auto custom-scrollbar">
+        {/* Background Gradients for Form Side */}
+        <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none opacity-30">
+          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand-primary/10 rounded-full blur-[150px]"></div>
+        </div>
+
+        <div className="w-full max-w-[500px] animate-in fade-in slide-in-from-right-10 duration-1000">
+          {/* Mobile Logo (Shown only on small screens) */}
+          <div className="lg:hidden flex justify-center mb-10">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
+          </div>
+
+          <div className="glass-panel rounded-[3rem] border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden">
+            <div className="p-1 bg-gradient-to-br from-white/10 via-transparent to-transparent">
+              <div className="bg-[#0c0c0e]/95 backdrop-blur-3xl rounded-[2.9rem] p-2 md:p-6">
+                {children}
+              </div>
+            </div>
+          </div>
+
+          {/* Copyright Section Removed as requested */}
         </div>
       </div>
     </div>

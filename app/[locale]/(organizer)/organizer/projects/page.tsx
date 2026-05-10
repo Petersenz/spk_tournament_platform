@@ -3,8 +3,21 @@ import { Link } from "@/lib/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Folder, Plus, Calendar, Trophy, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Metadata" });
+  return { title: t("projects") };
+}
 
 export default async function ProjectsPage() {
+  const t = await getTranslations("Organizer.projects");
+  const common = await getTranslations("Common");
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,15 +34,15 @@ export default async function ProjectsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="font-display text-4xl font-black uppercase tracking-tighter text-white">
-            Your Projects
+            {t("title")}
           </h1>
           <p className="text-text-secondary mt-2 font-medium">
-            Manage your organizations, brands, and tournament hubs.
+            {t("subtitle")}
           </p>
         </div>
         <Link href="/organizer/projects/new">
           <Button className="bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all font-black uppercase tracking-widest px-8 h-14 rounded-2xl">
-            <Plus className="mr-2 h-5 w-5" /> New Project
+            <Plus className="mr-2 h-5 w-5" /> {t("new_project")}
           </Button>
         </Link>
       </div>
@@ -40,15 +53,14 @@ export default async function ProjectsPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
             <Folder className="mx-auto h-20 w-20 text-brand-primary/20 mb-8" />
             <h3 className="font-display text-2xl font-black uppercase tracking-tight text-white mb-3">
-              No Projects Yet
+              {t("empty_title")}
             </h3>
             <p className="text-text-secondary mb-10 max-w-sm mx-auto font-medium leading-relaxed">
-              Create your first project to start organizing tournaments and
-              managing your esports brand.
+              {t("empty_desc")}
             </p>
             <Link href="/organizer/projects/new">
               <Button className="bg-white text-black hover:bg-brand-primary hover:text-white transition-all font-black uppercase tracking-widest px-10 h-14 rounded-2xl">
-                Create Your First Project
+                {t("create_first")}
               </Button>
             </Link>
           </div>
@@ -95,15 +107,16 @@ export default async function ProjectsPage() {
                   </div>
 
                   <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-2 text-[10px] text-text-tertiary font-black uppercase tracking-[0.2em]">
+                    <div className="flex items-center gap-2 text-xs text-text-tertiary font-black uppercase tracking-[0.2em]">
                       <Trophy className="h-3 w-3 text-brand-primary" />
                       <span>
-                        {(project.tournaments as unknown as { count: number }[])?.[0]
-                          ?.count || 0}{" "}
-                        Tournaments
+                        {(
+                          project.tournaments as unknown as { count: number }[]
+                        )?.[0]?.count || 0}{" "}
+                        {common("tournaments")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-text-tertiary font-black uppercase tracking-[0.2em]">
+                    <div className="flex items-center gap-2 text-xs text-text-tertiary font-black uppercase tracking-[0.2em]">
                       <Calendar className="h-3 w-3 text-brand-primary" />
                       <span>
                         {new Date(project.created_at).toLocaleDateString()}

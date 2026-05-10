@@ -3,7 +3,7 @@ import { Link } from "@/lib/i18n/routing";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "./ui/button";
 import { getTranslations } from "next-intl/server";
-import { LogOut, Search, ShieldCheck, Trophy, Gamepad2 } from "lucide-react";
+import { LogOut, ShieldCheck, Trophy, Gamepad2 } from "lucide-react";
 import { signOut } from "@/app/[locale]/(auth)/actions";
 import Image from "next/image";
 
@@ -89,7 +89,7 @@ export async function Navbar() {
                     variant="outline"
                     className="font-display border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest text-xs px-4 h-10 border-2"
                   >
-                    <ShieldCheck className="mr-2 h-4 w-4" /> Admin CP
+                    <ShieldCheck className="mr-2 h-4 w-4" /> {t("admin_cp")}
                   </Button>
                 </Link>
               )}
@@ -104,7 +104,7 @@ export async function Navbar() {
                   className="flex items-center gap-3 group"
                 >
                   <div className="text-right hidden sm:block">
-                    <div className="text-sm font-black text-white uppercase tracking-tight group-hover:text-brand-primary transition-colors leading-none mb-1 flex items-center justify-end gap-2">
+                    <div className="text-sm font-black text-white tracking-tight group-hover:text-brand-primary transition-colors leading-none mb-1 flex items-center justify-end gap-2">
                       {role === "admin" ? (
                         <ShieldCheck className="h-3 w-3 text-brand-primary" />
                       ) : role === "organizer" ? (
@@ -116,10 +116,10 @@ export async function Navbar() {
                     </div>
                     <div className="text-xs text-brand-primary font-bold uppercase tracking-[0.2em] leading-none opacity-80">
                       {role === "admin"
-                        ? "Super Admin"
+                        ? t("role_admin")
                         : role === "organizer"
-                          ? "Organizer"
-                          : "Player"}
+                          ? t("role_organizer")
+                          : t("role_player")}
                     </div>
                   </div>
                   <div className="h-11 w-11 rounded-2xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center font-black text-brand-primary overflow-hidden relative group-hover:border-brand-primary/50 transition-all shadow-[0_0_20px_rgba(155,27,48,0.2)]">

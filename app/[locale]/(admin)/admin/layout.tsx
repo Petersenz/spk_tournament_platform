@@ -11,6 +11,8 @@ import {
   LogOut,
   ShieldCheck,
   BarChart3,
+  Monitor,
+  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -50,6 +52,7 @@ export default async function AdminLayout({
                 src="/logo.png"
                 alt="Logo"
                 fill
+                sizes="48px"
                 className="object-contain"
                 priority
               />
@@ -80,6 +83,16 @@ export default async function AdminLayout({
               label: "Global Reports",
             },
             {
+              href: "/admin/platforms",
+              icon: Monitor,
+              label: "Platforms",
+            },
+            {
+              href: "/admin/issues",
+              icon: AlertTriangle,
+              label: "Issues",
+            },
+            {
               href: "/admin/settings",
               icon: Settings,
               label: "System Settings",
@@ -106,8 +119,9 @@ export default async function AdminLayout({
                 Super Admin
               </div>
             </div>
-            <form action="/auth/signout" method="post">
+            <form action="/api/auth/signout" method="POST">
               <Button
+                type="submit"
                 variant="ghost"
                 size="icon"
                 className="text-text-tertiary hover:text-brand-primary transition-all hover:scale-125"
@@ -131,6 +145,7 @@ export default async function AdminLayout({
                 src="/logo.png"
                 alt="Logo"
                 fill
+                sizes="40px"
                 className="object-contain"
               />
             </div>

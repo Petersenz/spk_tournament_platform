@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getLocale } from "next-intl/server";
+
+interface ActionResult {
+  success?: boolean;
+  error?: string;
+}
 
 export async function approveRegistration(formData: FormData) {
   const supabase = await createClient();
@@ -48,10 +51,10 @@ export async function approveRegistration(formData: FormData) {
       .select("role")
       .eq("id", user.id)
       .single();
-      if (profile?.role !== "admin") {
-        return { error: "Unauthorized: Not owner or admin" };
-      }
+    if (profile?.role !== "admin") {
+      return { error: "Unauthorized: Not owner or admin" };
     }
+  }
 
   const profile = Array.isArray(registration.profiles)
     ? registration.profiles[0]
@@ -80,7 +83,6 @@ export async function approveRegistration(formData: FormData) {
       return { error: `DB Participant Update Error: ${partError.message}` };
     }
   } else {
-    // Fallback if participant_id was somehow not linked (should not happen with new logic)
     const { error: participantError } = await supabase
       .from("participants")
       .insert({
@@ -111,7 +113,7 @@ export async function rejectRegistration(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/"); // Trigger global revalidate
+  revalidatePath("/");
   return { success: true };
 }
 
@@ -120,7 +122,6 @@ export async function deleteParticipant(formData: FormData) {
   const participantId = formData.get("participant_id") as string;
   const tournamentId = formData.get("tournament_id") as string;
 
-  // First get the user_id from the participant to delete their registration too
   const { data: participant } = await supabase
     .from("participants")
     .select("user_id")
@@ -134,7 +135,6 @@ export async function deleteParticipant(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  // Delete the associated registration if user_id exists
   if (participant?.user_id) {
     await supabase
       .from("registrations")
@@ -152,35 +152,106 @@ export async function addManualParticipant(formData: FormData) {
   const tournamentId = formData.get("tournament_id") as string;
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
+  const type = (formData.get("type") as "player" | "team") || "player";
 
   const { error } = await supabase.from("participants").insert({
     tournament_id: tournamentId,
     name,
     main_contact_email: email,
-    type: "player", // Default for MVP
+    type,
     status: "approved",
   });
 
   if (error) return { error: error.message };
 
-  const locale = await getLocale();
   revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
-  redirect(`/${locale}/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
 }
 
-export async function updateSeed(formData: FormData) {
+export async function updateParticipantFull(
+  formData: FormData,
+): Promise<ActionResult> {
   const supabase = await createClient();
-  const participantId = formData.get("participant_id") as string;
+  const id = formData.get("id") as string;
   const tournamentId = formData.get("tournament_id") as string;
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const status = formData.get("status") as string;
   const seed = parseInt(formData.get("seed") as string);
+  const team_identifier = formData.get("team_identifier") as string;
+  const logo_url = formData.get("logo_url") as string;
+  const type = formData.get("type") as "player" | "team";
 
   const { error } = await supabase
     .from("participants")
-    .update({ seed: isNaN(seed) ? null : seed })
-    .eq("id", participantId);
+    .update({
+      name,
+      main_contact_email: email,
+      status,
+      seed: isNaN(seed) ? null : seed,
+      team_identifier,
+      logo_url,
+      type,
+    })
+    .eq("id", id);
 
   if (error) return { error: error.message };
 
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
+}
+
+export async function savePlayer(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient();
+  const id = formData.get("id") as string;
+  const participantId = formData.get("participant_id") as string;
+  const tournamentId = formData.get("tournament_id") as string;
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const custom_user_identifier = formData.get(
+    "custom_user_identifier",
+  ) as string;
+  const image_url = formData.get("image_url") as string;
+  const is_captain = formData.get("is_captain") === "true";
+  const position = parseInt(formData.get("position") as string);
+
+  if (id) {
+    const { error } = await supabase
+      .from("players")
+      .update({
+        name,
+        email,
+        custom_user_identifier,
+        image_url,
+        is_captain,
+        position: isNaN(position) ? null : position,
+      })
+      .eq("id", id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase.from("players").insert({
+      participant_id: participantId,
+      name,
+      email,
+      custom_user_identifier,
+      image_url,
+      is_captain,
+      position: isNaN(position) ? null : position,
+    });
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
+}
+
+export async function deletePlayer(
+  playerId: string,
+  tournamentId: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("players").delete().eq("id", playerId);
+  if (error) return { error: error.message };
   revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
   return { success: true };
 }
@@ -189,7 +260,6 @@ export async function randomizeSeeds(formData: FormData) {
   const supabase = await createClient();
   const tournamentId = formData.get("tournament_id") as string;
 
-  // 1. Fetch all confirmed participants
   const { data: participants } = await supabase
     .from("participants")
     .select("id")
@@ -198,10 +268,8 @@ export async function randomizeSeeds(formData: FormData) {
 
   if (!participants) return { error: "No participants found" };
 
-  // 2. Shuffle them
   const shuffled = [...participants].sort(() => Math.random() - 0.5);
 
-  // 3. Update each one with a new seed
   const updates = shuffled.map((p, index) =>
     supabase
       .from("participants")
@@ -210,6 +278,43 @@ export async function randomizeSeeds(formData: FormData) {
   );
 
   await Promise.all(updates);
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
+}
+
+export async function deleteMultipleParticipants(formData: FormData) {
+  const supabase = await createClient();
+  const participantIds = JSON.parse(
+    formData.get("participant_ids") as string,
+  ) as string[];
+  const tournamentId = formData.get("tournament_id") as string;
+
+  if (!participantIds.length) return { error: "No participants selected" };
+
+  const { data: participants } = await supabase
+    .from("participants")
+    .select("user_id")
+    .in("id", participantIds);
+
+  const userIds = participants
+    ?.map((p) => p.user_id)
+    .filter(Boolean) as string[];
+
+  const { error: deleteError } = await supabase
+    .from("participants")
+    .delete()
+    .in("id", participantIds);
+
+  if (deleteError) return { error: deleteError.message };
+
+  if (userIds.length) {
+    await supabase
+      .from("registrations")
+      .delete()
+      .eq("tournament_id", tournamentId)
+      .in("user_id", userIds);
+  }
 
   revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
   return { success: true };

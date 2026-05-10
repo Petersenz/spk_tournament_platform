@@ -3,6 +3,7 @@ import { Link } from "@/lib/i18n/routing";
 import { Navbar } from "@/components/Navbar";
 import { Search, Trophy } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { TournamentFilters } from "@/components/TournamentFilters";
 
 export async function generateMetadata({
   params,
@@ -13,7 +14,6 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "Metadata" });
   return { title: t("tournaments") };
 }
-import { TournamentFilters } from "@/components/TournamentFilters";
 
 export default async function PublicTournamentsPage({
   searchParams,
@@ -101,7 +101,7 @@ export default async function PublicTournamentsPage({
                             : "bg-white/10 text-text-tertiary"
                         }`}
                       >
-                        {t_item.status.replace("_", " ")}
+                        {t(`status_${t_item.status}`)}
                       </span>
                     </div>
 
@@ -113,11 +113,17 @@ export default async function PublicTournamentsPage({
                       <Trophy className="h-16 w-16 text-brand-primary opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
                     </div>
 
-                    <div className="p-10 flex-1 flex flex-col">
-                      <div className="text-[10px] text-brand-primary font-black uppercase tracking-[0.3em] mb-3">
-                        {t_item.projects?.name}
+                    <div className="p-8 lg:p-10 flex-1 flex flex-col min-w-0">
+                      <div className="flex flex-col gap-1 mb-4">
+                        <span className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] opacity-70">
+                          {t("hosted_by")}
+                        </span>
+                        <div className="text-[11px] text-white font-black uppercase tracking-widest truncate">
+                          {t_item.projects?.name}
+                        </div>
                       </div>
-                      <h3 className="font-display text-2xl font-black text-white mb-8 group-hover:text-brand-primary transition-colors uppercase tracking-tight leading-tight">
+
+                      <h3 className="font-display text-2xl lg:text-3xl font-black text-white mb-6 group-hover:text-brand-primary transition-colors uppercase tracking-tighter leading-[0.95] line-clamp-2 min-h-[3.5rem]">
                         {t_item.name}
                       </h3>
 
@@ -135,8 +141,12 @@ export default async function PublicTournamentsPage({
                             {t("slots")}
                           </span>
                           <span className="text-brand-primary">
-                            {(t_item.participants as unknown as { count: number }[])?.[0]?.count || 0} /{" "}
-                            {t_item.size}
+                            {(
+                              t_item.participants as unknown as {
+                                count: number;
+                              }[]
+                            )?.[0]?.count || 0}{" "}
+                            / {t_item.size}
                           </span>
                         </div>
                       </div>

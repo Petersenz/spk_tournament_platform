@@ -1,34 +1,42 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteProject } from "../actions";
+import { useTranslations } from "next-intl";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export function DeleteProjectButton({ projectId }: { projectId: string }) {
+  const t = useTranslations("Common");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleDelete = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this project? This will delete all its tournaments too.",
-      )
-    ) {
-      return;
-    }
+    setIsDeleting(true);
     await deleteProject(projectId);
+    setShowConfirm(false);
   };
 
   return (
-    <form
-      action={async () => {
-        await handleDelete();
-      }}
-    >
+    <>
       <Button
-        variant="outline"
-        type="submit"
-        className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+        variant="default"
+        type="button"
+        onClick={() => setShowConfirm(true)}
+        className="h-14 px-8 rounded-2xl bg-[#ef4444] text-white hover:bg-[#ff5555] transition-all duration-300 font-display font-bold uppercase tracking-widest text-xs group shadow-[0_0_30px_rgba(239,68,68,0.2)] hover:shadow-red-600/40"
       >
-        <Trash2 className="h-4 w-4 mr-2" /> Delete
+        <Trash2 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />{" "}
+        {t("delete")}
       </Button>
-    </form>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+        title={t("delete") + " " + t("project")}
+      />
+    </>
   );
 }

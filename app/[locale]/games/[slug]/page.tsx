@@ -2,15 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/lib/i18n/routing";
 import { Navbar } from "@/components/Navbar";
-import {
-  Trophy,
-  Calendar,
-  Users,
-  Gamepad2,
-  Zap,
-  ArrowRight,
-  Info,
-} from "lucide-react";
+import { Trophy, Calendar, Gamepad2, Zap, ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 
@@ -101,7 +93,17 @@ export default async function GameDetailPage({
   const past =
     tournaments?.filter((tourney) => tourney.status === "completed") || [];
 
-  const renderTournaments = (items: any[], emptyKey: string) => {
+  const renderTournaments = (
+    items: {
+      id: string;
+      name: string;
+      status: string;
+      size: number;
+      projects?: { name: string };
+      participants: { count: number }[] | { count: number } | unknown;
+    }[],
+    emptyKey: string,
+  ) => {
     if (items.length === 0) {
       return (
         <div className="py-16 text-center border border-white/5 rounded-[3rem] bg-bg-secondary/30 backdrop-blur-sm">
@@ -175,8 +177,9 @@ export default async function GameDetailPage({
                         {tTourney("slots")}
                       </span>
                       <span className="text-brand-primary">
-                        {(tourney.participants as unknown as { count: number }[])?.[0]
-                          ?.count || 0}{" "}
+                        {(
+                          tourney.participants as unknown as { count: number }[]
+                        )?.[0]?.count || 0}{" "}
                         / {tourney.size}
                       </span>
                     </div>

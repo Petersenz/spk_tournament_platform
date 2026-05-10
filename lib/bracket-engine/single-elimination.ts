@@ -47,12 +47,20 @@ export async function generateSingleElimination(
   }
 
   // 5. Create matches for each round (working backwards to link next_match_id)
-  const matchesByRound: { id: string; next_match_id?: string; next_match_slot?: number }[][] = [];
+  const matchesByRound: {
+    id: string;
+    next_match_id?: string;
+    next_match_slot?: number;
+  }[][] = [];
   let nextRoundMatches: { id: string }[] = [];
 
   for (let r = roundsCount; r >= 1; r--) {
     const matchesInRound = Math.pow(2, roundsCount - r);
-    const currentRoundMatches: { id: string; next_match_id?: string; next_match_slot?: number }[] = [];
+    const currentRoundMatches: {
+      id: string;
+      next_match_id?: string;
+      next_match_slot?: number;
+    }[] = [];
     const roundId = roundIds[r - 1];
 
     for (let s = 1; s <= matchesInRound; s++) {

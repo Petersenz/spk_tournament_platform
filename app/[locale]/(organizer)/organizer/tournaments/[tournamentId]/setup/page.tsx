@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Link } from "@/lib/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +18,10 @@ import {
 } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/setup/actions";
 import {
   CheckCircle2,
-  Circle,
   ChevronLeft,
   Layout,
   ShieldCheck,
   Rocket,
-  Swords,
   Settings2,
   Calendar,
   Zap,
@@ -63,6 +61,14 @@ export default async function TournamentSetupPage({
     .eq("tournament_id", tournamentId)
     .order("order_index", { ascending: true });
 
+  const { count: participantCount } = await supabase
+    .from("participants")
+    .select("id", { count: "exact", head: true })
+    .eq("tournament_id", tournamentId)
+    .eq("status", "approved");
+
+  const isFull = (participantCount || 0) >= tournament.size;
+
   const steps = [
     {
       id: "1",
@@ -100,7 +106,7 @@ export default async function TournamentSetupPage({
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="h-1 w-6 bg-brand-primary"></span>
-              <p className="text-text-tertiary text-[10px] font-black uppercase tracking-[0.2em]">
+              <p className="text-text-tertiary text-xs font-black uppercase tracking-[0.2em]">
                 {tournament.name}
               </p>
             </div>
@@ -164,7 +170,7 @@ export default async function TournamentSetupPage({
                     >
                       {s.title}
                     </h3>
-                    <p className="text-[10px] text-text-tertiary mt-1 font-bold uppercase tracking-wider">
+                    <p className="text-xs text-text-tertiary mt-1 font-bold uppercase tracking-wider">
                       {s.description}
                     </p>
                   </div>
@@ -207,39 +213,15 @@ export default async function TournamentSetupPage({
 
                   <div className="space-y-8 p-10 bg-white/2 border border-white/5 rounded-[2.5rem]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-3">
-                        <Label
-                          htmlFor="participant_type"
-                          className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
-                        >
-                          {t("participant_type")}
-                        </Label>
-                        <Select
-                          name="participant_type"
-                          defaultValue={tournament.participant_type}
-                        >
-                          <SelectTrigger 
-                            id="participant_type"
-                            aria-label={t("participant_type")}
-                            className="h-14 bg-white/5 border-white/10 rounded-xl focus:border-brand-primary transition-all text-white font-bold"
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
-                            <SelectItem value="player">
-                              {t("type_player")}
-                            </SelectItem>
-                            <SelectItem value="team">
-                              {t("type_team")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
+                      <input
+                        type="hidden"
+                        name="participant_type"
+                        value={tournament.participant_type}
+                      />
                       <div className="space-y-3">
                         <Label
                           htmlFor="stage_type"
-                          className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
+                          className="text-sm font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
                         >
                           {t("format_type")}
                         </Label>
@@ -249,7 +231,7 @@ export default async function TournamentSetupPage({
                             stages?.[0]?.stage_type || "single_elimination"
                           }
                         >
-                          <SelectTrigger 
+                          <SelectTrigger
                             id="stage_type"
                             aria-label={t("format_type")}
                             className="h-14 bg-white/5 border-white/10 rounded-xl focus:border-brand-primary transition-all text-white font-bold"
@@ -258,80 +240,45 @@ export default async function TournamentSetupPage({
                           </SelectTrigger>
                           <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
                             <SelectItem value="single_elimination">
-                              Single Elimination
+                              {tCommon("formats.single_elimination")}
                             </SelectItem>
                             <SelectItem value="double_elimination">
-                              Double Elimination
+                              {tCommon("formats.double_elimination")}
                             </SelectItem>
                             <SelectItem value="round_robin">
-                              Round Robin
+                              {tCommon("formats.round_robin")}
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
 
-                    <div className="space-y-3">
-                      <Label
-                        htmlFor="stage_name"
-                        className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
-                      >
-                        {t("stage_name")}
-                      </Label>
-                      <Input
-                        id="stage_name"
-                        name="stage_name"
-                        defaultValue={stages?.[0]?.name || "Main Event"}
-                        required
-                        className="h-14 bg-white/5 border-white/10 rounded-xl focus:border-brand-primary transition-all text-white font-bold"
-                      />
-                    </div>
-
-                    <div className="pt-6 border-t border-white/5 space-y-6">
-                      <div className="flex items-center gap-3">
-                        <div className="h-1 w-8 bg-brand-primary"></div>
-                        <h3 className="font-display text-sm font-black uppercase tracking-widest text-white">
-                          {t("team_size_config")}
-                        </h3>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                          <Label
-                            htmlFor="team_min_players"
-                            className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
-                          >
-                            {t("min_players")}
-                          </Label>
-                          <Input
-                            type="number"
-                            id="team_min_players"
-                            name="team_min_players"
-                            defaultValue={tournament.team_min_players || 1}
-                            min={1}
-                            required
-                            className="h-14 bg-white/5 border-white/10 rounded-xl focus:border-brand-primary transition-all text-white font-bold"
-                          />
-                        </div>
-                        <div className="space-y-3">
-                          <Label
-                            htmlFor="team_max_players"
-                            className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
-                          >
-                            {t("max_players")}
-                          </Label>
-                          <Input
-                            type="number"
-                            id="team_max_players"
-                            name="team_max_players"
-                            defaultValue={tournament.team_max_players || 5}
-                            min={1}
-                            required
-                            className="h-14 bg-white/5 border-white/10 rounded-xl focus:border-brand-primary transition-all text-white font-bold"
-                          />
-                        </div>
+                      <div className="space-y-3">
+                        <Label
+                          htmlFor="stage_name"
+                          className="text-sm font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
+                        >
+                          {t("stage_name")}
+                        </Label>
+                        <Input
+                          id="stage_name"
+                          name="stage_name"
+                          defaultValue={stages?.[0]?.name || "Main Event"}
+                          required
+                          className="h-14 bg-white/5 border-white/10 rounded-xl focus:border-brand-primary transition-all text-white font-bold"
+                        />
                       </div>
                     </div>
+
+                    <input
+                      type="hidden"
+                      name="team_min_players"
+                      value={tournament.team_min_players || 1}
+                    />
+                    <input
+                      type="hidden"
+                      name="team_max_players"
+                      value={tournament.team_max_players || 5}
+                    />
                   </div>
 
                   <div className="pt-6 flex justify-end">
@@ -347,162 +294,214 @@ export default async function TournamentSetupPage({
 
               {/* STEP 2: REGISTRATION SETTINGS */}
               {step === "2" && (
-                <form
-                  action={async (formData) => {
-                    "use server";
-                    await saveRegistrationSettings(formData);
-                  }}
-                  className="space-y-10"
-                >
-                  <input
-                    type="hidden"
-                    name="tournament_id"
-                    value={tournament.id}
-                  />
-
-                  <div className="space-y-4">
-                    <div className="h-1 w-12 bg-brand-primary"></div>
-                    <h2 className="font-display text-4xl font-black uppercase tracking-tighter text-white">
-                      {t("access_control")}
-                    </h2>
-                    <p className="text-text-tertiary text-sm font-medium">
-                      {t("access_desc")}
-                    </p>
-                  </div>
-
-                  <div className="space-y-8">
-                    <label className="flex items-center justify-between p-8 bg-white/2 border border-white/5 rounded-[2.5rem] group hover:border-brand-primary/30 transition-all cursor-pointer relative overflow-hidden">
-                      <div className="space-y-1 relative z-10">
-                        <span className="text-lg font-black uppercase tracking-tight text-white block">
-                          {t("open_reg")}
-                        </span>
-                        <p className="text-xs text-text-tertiary font-medium">
-                          {t("open_reg_desc")}
+                <div className="space-y-10">
+                  {isFull ? (
+                    <div className="space-y-10">
+                      <div className="space-y-4">
+                        <div className="h-1 w-12 bg-success"></div>
+                        <h2 className="font-display text-4xl font-black uppercase tracking-tighter text-white">
+                          {t("reg_full_title")}
+                        </h2>
+                        <p className="text-text-tertiary text-sm font-medium">
+                          {t("reg_full_desc")}
                         </p>
                       </div>
-                      <div className="relative inline-flex items-center z-10">
-                        <input
-                          type="checkbox"
-                          name="registration_enabled"
-                          defaultChecked={tournament.registration_enabled}
-                          className="sr-only peer"
-                        />
-                        <div className="w-14 h-8 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-text-tertiary after:border-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:after:bg-white peer-checked:bg-brand-primary transition-all"></div>
-                      </div>
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-[40px] rounded-full -mr-16 -mt-16"></div>
-                    </label>
 
-                    <div className="space-y-4">
-                      <Label className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1">
-                        {t("approval_mode")}
-                      </Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="relative cursor-pointer group">
-                          <input
-                            type="radio"
-                            name="registration_mode"
-                            value="auto"
-                            className="sr-only peer"
-                            defaultChecked={
-                              tournament.registration_mode === "auto" ||
-                              !tournament.registration_mode
-                            }
-                          />
-                          <div className="h-full p-6 rounded-[2.5rem] border border-white/5 bg-white/2 transition-all duration-300 peer-checked:border-brand-primary peer-checked:bg-brand-primary/5 hover:border-white/20 group-hover:translate-y-[-2px] relative overflow-hidden">
-                            <div className="flex items-center gap-4 mb-3 relative z-10">
-                              <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-text-tertiary peer-checked:text-brand-primary transition-colors">
-                                <Zap className="h-6 w-6" />
-                              </div>
-                              <h3 className="font-display text-sm font-black uppercase tracking-widest text-white">
-                                {t("auto_title")}
-                              </h3>
-                            </div>
-                            <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider leading-relaxed relative z-10">
-                              {t("auto_desc")}
-                            </p>
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/10 blur-[50px] rounded-full -mr-12 -mt-12 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                          </div>
-                        </label>
-
-                        <label className="relative cursor-pointer group">
-                          <input
-                            type="radio"
-                            name="registration_mode"
-                            value="manual"
-                            className="sr-only peer"
-                            defaultChecked={
-                              tournament.registration_mode === "manual"
-                            }
-                          />
-                          <div className="h-full p-6 rounded-[2.5rem] border border-white/5 bg-white/2 transition-all duration-300 peer-checked:border-brand-primary peer-checked:bg-brand-primary/5 hover:border-white/20 group-hover:translate-y-[-2px] relative overflow-hidden">
-                            <div className="flex items-center gap-4 mb-3 relative z-10">
-                              <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-text-tertiary peer-checked:text-brand-primary transition-colors">
-                                <ShieldCheck className="h-6 w-6" />
-                              </div>
-                              <h3 className="font-display text-sm font-black uppercase tracking-widest text-white">
-                                {t("manual_title")}
-                              </h3>
-                            </div>
-                            <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider leading-relaxed relative z-10">
-                              {t("manual_desc")}
-                            </p>
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/10 blur-[50px] rounded-full -mr-12 -mt-12 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <Label
-                        htmlFor="registration_deadline"
-                        className="text-xs font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
-                      >
-                        {t("deadline")}
-                      </Label>
-                      <div className="relative group">
-                        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand-primary transition-colors">
-                          <Calendar className="h-5 w-5" />
+                      <div className="p-10 bg-white/2 border border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-6">
+                        <div className="h-24 w-24 rounded-full bg-success/10 flex items-center justify-center text-success">
+                          <CheckCircle2 className="h-12 w-12" />
                         </div>
-                        <Input
-                          id="registration_deadline"
-                          name="registration_deadline"
-                          type="datetime-local"
-                          defaultValue={
-                            tournament.registration_deadline
-                              ? new Date(tournament.registration_deadline)
-                                  .toISOString()
-                                  .slice(0, 16)
-                              : ""
-                          }
-                          className="h-16 pl-14 bg-white/5 border-white/10 rounded-2xl focus:border-brand-primary transition-all text-white font-bold text-sm"
-                        />
+                        <div className="space-y-2">
+                          <p className="text-xl font-black text-white uppercase tracking-tight">
+                            {participantCount} / {tournament.size}{" "}
+                            {tCommon("slots_filled")}
+                          </p>
+                          <p className="text-xs text-text-tertiary font-bold uppercase tracking-widest">
+                            Registration is naturally closed
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider ml-1 italic opacity-60">
-                        {t("deadline_hint")}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="pt-6 flex justify-between">
-                    <Link
-                      href={`/organizer/tournaments/${tournamentId}/setup?step=1`}
+                      <div className="pt-6 flex justify-between">
+                        <Link
+                          href={`/organizer/tournaments/${tournamentId}/setup?step=1`}
+                        >
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-16 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-xs"
+                          >
+                            {tCommon("back")}
+                          </Button>
+                        </Link>
+                        <Link
+                          href={`/organizer/tournaments/${tournamentId}/setup?step=3`}
+                        >
+                          <Button className="bg-brand-primary text-white hover:bg-white hover:text-black transition-all font-black uppercase tracking-widest px-10 h-16 rounded-2xl shadow-[0_0_30px_rgba(244,0,9,0.3)]">
+                            {tCommon("manage")} & {t("step_3")}
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <form
+                      action={async (formData) => {
+                        "use server";
+                        await saveRegistrationSettings(formData);
+                      }}
+                      className="space-y-10"
                     >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-16 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-xs"
-                      >
-                        {tCommon("back")}
-                      </Button>
-                    </Link>
-                    <Button
-                      type="submit"
-                      className="bg-brand-primary text-white hover:bg-white hover:text-black transition-all font-black uppercase tracking-widest px-10 h-16 rounded-2xl shadow-[0_0_30px_rgba(244,0,9,0.3)]"
-                    >
-                      {tCommon("save")} & {tCommon("manage")}
-                    </Button>
-                  </div>
-                </form>
+                      <input
+                        type="hidden"
+                        name="tournament_id"
+                        value={tournament.id}
+                      />
+
+                      <div className="space-y-4">
+                        <div className="h-1 w-12 bg-brand-primary"></div>
+                        <h2 className="font-display text-4xl font-black uppercase tracking-tighter text-white">
+                          {t("access_control")}
+                        </h2>
+                        <p className="text-text-tertiary text-sm font-medium">
+                          {t("access_desc")}
+                        </p>
+                      </div>
+
+                      <div className="space-y-8">
+                        <label className="flex items-center justify-between p-8 bg-white/2 border border-white/5 rounded-[2.5rem] group hover:border-brand-primary/30 transition-all cursor-pointer relative overflow-hidden">
+                          <div className="space-y-1 relative z-10">
+                            <span className="text-lg font-black uppercase tracking-tight text-white block">
+                              {t("open_reg")}
+                            </span>
+                            <p className="text-xs text-text-tertiary font-medium">
+                              {t("open_reg_desc")}
+                            </p>
+                          </div>
+                          <div className="relative inline-flex items-center z-10">
+                            <input
+                              type="checkbox"
+                              name="registration_enabled"
+                              defaultChecked={tournament.registration_enabled}
+                              className="sr-only peer"
+                            />
+                            <div className="w-14 h-8 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-text-tertiary after:border-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:after:bg-white peer-checked:bg-brand-primary transition-all"></div>
+                          </div>
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-[40px] rounded-full -mr-16 -mt-16"></div>
+                        </label>
+
+                        <div className="space-y-4">
+                          <Label className="text-sm font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1">
+                            {t("approval_mode")}
+                          </Label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label className="relative cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="registration_mode"
+                                value="auto"
+                                className="sr-only peer"
+                                defaultChecked={
+                                  tournament.registration_mode === "auto" ||
+                                  !tournament.registration_mode
+                                }
+                              />
+                              <div className="h-full p-6 rounded-[2.5rem] border border-white/5 bg-white/2 transition-all duration-300 peer-checked:border-brand-primary peer-checked:bg-brand-primary/5 hover:border-white/20 group-hover:translate-y-[-2px] relative overflow-hidden">
+                                <div className="flex items-center gap-4 mb-3 relative z-10">
+                                  <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-text-tertiary peer-checked:text-brand-primary transition-colors">
+                                    <Zap className="h-6 w-6" />
+                                  </div>
+                                  <h3 className="font-display text-sm font-black uppercase tracking-widest text-white">
+                                    {t("auto_title")}
+                                  </h3>
+                                </div>
+                                <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider leading-relaxed relative z-10">
+                                  {t("auto_desc")}
+                                </p>
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/10 blur-[50px] rounded-full -mr-12 -mt-12 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                              </div>
+                            </label>
+
+                            <label className="relative cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="registration_mode"
+                                value="manual"
+                                className="sr-only peer"
+                                defaultChecked={
+                                  tournament.registration_mode === "manual"
+                                }
+                              />
+                              <div className="h-full p-6 rounded-[2.5rem] border border-white/5 bg-white/2 transition-all duration-300 peer-checked:border-brand-primary peer-checked:bg-brand-primary/5 hover:border-white/20 group-hover:translate-y-[-2px] relative overflow-hidden">
+                                <div className="flex items-center gap-4 mb-3 relative z-10">
+                                  <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-text-tertiary peer-checked:text-brand-primary transition-colors">
+                                    <ShieldCheck className="h-6 w-6" />
+                                  </div>
+                                  <h3 className="font-display text-sm font-black uppercase tracking-widest text-white">
+                                    {t("manual_title")}
+                                  </h3>
+                                </div>
+                                <p className="text-xs text-text-tertiary font-bold uppercase tracking-wider leading-relaxed relative z-10">
+                                  {t("manual_desc")}
+                                </p>
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/10 blur-[50px] rounded-full -mr-12 -mt-12 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <Label
+                            htmlFor="registration_deadline"
+                            className="text-sm font-bold uppercase tracking-[0.2em] text-text-tertiary ml-1"
+                          >
+                            {t("deadline")}
+                          </Label>
+                          <div className="relative group">
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand-primary transition-colors">
+                              <Calendar className="h-5 w-5" />
+                            </div>
+                            <Input
+                              id="registration_deadline"
+                              name="registration_deadline"
+                              type="datetime-local"
+                              defaultValue={
+                                tournament.registration_deadline
+                                  ? new Date(tournament.registration_deadline)
+                                      .toISOString()
+                                      .slice(0, 16)
+                                  : ""
+                              }
+                              className="h-16 pl-14 bg-white/5 border-white/10 rounded-2xl focus:border-brand-primary transition-all text-white font-bold text-sm"
+                            />
+                          </div>
+                          <p className="text-xs text-text-tertiary font-bold uppercase tracking-wider ml-1 italic opacity-60">
+                            {t("deadline_hint")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 flex justify-between">
+                        <Link
+                          href={`/organizer/tournaments/${tournamentId}/setup?step=1`}
+                        >
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-16 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-xs"
+                          >
+                            {tCommon("back")}
+                          </Button>
+                        </Link>
+                        <Button
+                          type="submit"
+                          className="bg-brand-primary text-white hover:bg-white hover:text-black transition-all font-black uppercase tracking-widest px-10 h-16 rounded-2xl shadow-[0_0_30px_rgba(244,0,9,0.3)]"
+                        >
+                          {tCommon("save")} & {tCommon("manage")}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </div>
               )}
 
               {/* STEP 3: PUBLISH */}
@@ -533,36 +532,37 @@ export default async function TournamentSetupPage({
                   <div className="space-y-6 bg-white/2 border border-white/5 rounded-[2.5rem] p-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                       <div className="space-y-1">
-                        <span className="text-xs text-text-tertiary font-bold uppercase tracking-[0.2em]">
-                          Tournament Name
+                        <span className="text-sm text-text-tertiary font-bold uppercase tracking-[0.2em]">
+                          {t("name_label")}
                         </span>
                         <span className="font-black text-xl text-white uppercase tracking-tight block leading-tight">
                           {tournament.name}
                         </span>
                       </div>
                       <div className="space-y-1">
-                        <span className="text-xs text-text-tertiary font-bold uppercase tracking-[0.2em]">
-                          Game Arena
+                        <span className="text-sm text-text-tertiary font-bold uppercase tracking-[0.2em]">
+                          {t("game_label")}
                         </span>
                         <span className="font-black text-xl text-white uppercase tracking-tight block leading-tight">
                           {tournament.games?.name || "Custom"}
                         </span>
                       </div>
                       <div className="space-y-1">
-                        <span className="text-xs text-text-tertiary font-bold uppercase tracking-[0.2em]">
-                          Format
+                        <span className="text-sm text-text-tertiary font-bold uppercase tracking-[0.2em]">
+                          {t("format_label")}
                         </span>
                         <span className="font-black text-xl text-white uppercase tracking-tight block leading-tight">
-                          {tournament.match_type}
+                          {tCommon(`match_${tournament.match_type}`)}
                         </span>
                       </div>
                       <div className="space-y-1">
-                        <span className="text-xs text-text-tertiary font-bold uppercase tracking-[0.2em]">
-                          Stage Type
+                        <span className="text-sm text-text-tertiary font-bold uppercase tracking-[0.2em]">
+                          {t("stage_label")}
                         </span>
                         <span className="font-black text-xl text-white uppercase tracking-tight block leading-tight">
-                          {stages?.[0]?.stage_type?.replace("_", " ") ||
-                            "Not Configured"}
+                          {stages?.[0]?.stage_type
+                            ? tCommon(`formats.${stages[0].stage_type}`)
+                            : "Not Configured"}
                         </span>
                       </div>
                     </div>

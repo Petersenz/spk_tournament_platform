@@ -43,16 +43,16 @@ export default async function HomePage() {
           <div className="hero-shapes pointer-events-none">
             <div
               className="hero-shape border-brand-primary opacity-20 left-[10%] top-[20%] w-20 h-20"
-              style={{ "--rotation": "45deg" } as any}
+              style={{ "--rotation": "45deg" } as React.CSSProperties}
             ></div>
             <div
               className="hero-shape border-brand-primary opacity-10 right-[15%] bottom-[30%] w-32 h-32"
-              style={{ "--rotation": "-15deg" } as any}
+              style={{ "--rotation": "-15deg" } as React.CSSProperties}
             ></div>
           </div>
 
           <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <h1 className="font-display text-5xl sm:text-6xl md:text-[80px] font-black tracking-tight uppercase leading-[1.1] text-white drop-shadow-[0_0_15px_rgba(244,0,9,0.5)]">
+            <h1 className="font-display text-5xl sm:text-6xl md:text-[80px] font-black tracking-tight uppercase leading-[1.1] text-white drop-shadow-[0_0_15px_rgba(244,0,9,0.5)] whitespace-pre-line">
               {t("hero.title")}
             </h1>
             <p className="font-sans text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">

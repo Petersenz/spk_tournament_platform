@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/lib/i18n/routing";
 import { Button } from "@/components/ui/button";
-import { deleteProject } from "../actions";
 import {
   Edit3,
   ChevronLeft,
@@ -10,10 +9,10 @@ import {
   Trophy,
   Calendar,
   Swords,
-  Info,
 } from "lucide-react";
 import { DeleteProjectButton } from "./DeleteProjectButton";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 
 export default async function ProjectDetailPage({
   params,
@@ -21,6 +20,8 @@ export default async function ProjectDetailPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
+  const t = await getTranslations("Organizer.project_detail");
+  const common = await getTranslations("Common");
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,10 +51,10 @@ export default async function ProjectDetailPage({
       {/* NAVIGATION & BREADCRUMB */}
       <Link
         href="/organizer/projects"
-        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary hover:text-brand-primary transition-colors group"
+        className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-text-tertiary hover:text-brand-primary transition-colors group"
       >
         <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />{" "}
-        Back to Projects
+        {t("back")}
       </Link>
 
       {/* HERO HEADER */}
@@ -85,13 +86,11 @@ export default async function ProjectDetailPage({
                 {project.name}
               </h1>
               {project.description ? (
-                <p className="text-text-secondary max-w-2xl text-lg font-medium leading-relaxed">
+                <p className="text-text-secondary max-w-2xl text-lg font-medium leading-relaxed whitespace-pre-line">
                   {project.description}
                 </p>
               ) : (
-                <p className="text-text-tertiary italic">
-                  No description provided for this project.
-                </p>
+                <p className="text-text-tertiary italic">{t("no_desc")}</p>
               )}
             </div>
           </div>
@@ -100,9 +99,9 @@ export default async function ProjectDetailPage({
             <Link href={`/organizer/projects/${projectId}/edit`}>
               <Button
                 variant="outline"
-                className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-[10px]"
+                className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-xs"
               >
-                <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+                <Edit3 className="mr-2 h-4 w-4" /> {t("edit_profile")}
               </Button>
             </Link>
             <DeleteProjectButton projectId={projectId} />
@@ -116,12 +115,12 @@ export default async function ProjectDetailPage({
           <div className="flex items-center gap-4">
             <div className="h-10 w-1 bg-brand-primary rounded-full"></div>
             <h2 className="font-display text-3xl font-black uppercase tracking-tight text-white">
-              Active Tournaments
+              {t("active_tournaments")}
             </h2>
           </div>
           <Link href={`/organizer/projects/${project.id}/tournaments/new`}>
             <Button className="bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all font-black uppercase tracking-widest px-8 h-14 rounded-2xl">
-              <Plus className="mr-2 h-5 w-5" /> Create Tournament
+              <Plus className="mr-2 h-5 w-5" /> {t("create_tournament")}
             </Button>
           </Link>
         </div>
@@ -131,17 +130,17 @@ export default async function ProjectDetailPage({
             <div className="col-span-full py-24 text-center border border-dashed border-white/10 rounded-[3rem] bg-white/2 backdrop-blur-sm group">
               <Swords className="mx-auto h-16 w-16 text-white/10 mb-6 group-hover:scale-110 transition-transform duration-700" />
               <h3 className="font-display text-xl font-black uppercase tracking-tight text-white mb-2">
-                No tournaments found
+                {t("empty_tournaments")}
               </h3>
               <p className="text-text-tertiary font-medium">
-                Start hosting competitions within this project.
+                {t("empty_desc")}
               </p>
             </div>
           ) : (
-            tournaments?.map((t) => (
+            tournaments?.map((t_item) => (
               <Link
-                key={t.id}
-                href={`/organizer/tournaments/${t.id}`}
+                key={t_item.id}
+                href={`/organizer/tournaments/${t_item.id}`}
                 className="group"
               >
                 <div className="tilt-card h-full">
@@ -153,57 +152,63 @@ export default async function ProjectDetailPage({
                     <div className="space-y-6 relative z-10">
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="text-[10px] text-brand-primary font-black uppercase tracking-[0.3em] mb-2 block">
-                            {t.games?.name || "Custom Game"}
+                          <span className="text-xs text-brand-primary font-black uppercase tracking-[0.3em] mb-2 block">
+                            {t_item.games?.name || common("tournaments")}
                           </span>
                           <h3 className="font-display text-2xl font-black text-white group-hover:text-brand-primary transition-colors uppercase tracking-tight">
-                            {t.name}
+                            {t_item.name}
                           </h3>
                         </div>
                         <span
-                          className={`text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-[0.2em] shadow-lg ${
-                            t.status === "registration_open"
+                          className={`text-xs px-4 py-1.5 rounded-full font-black uppercase tracking-[0.2em] shadow-lg ${
+                            t_item.status === "registration_open"
                               ? "bg-success text-white"
-                              : "bg-white/10 text-text-tertiary"
+                              : t_item.status === "completed" ||
+                                  t_item.status === "cancelled"
+                                ? "bg-white/5 text-text-tertiary"
+                                : "bg-brand-primary text-white"
                           }`}
                         >
-                          {t.status.replace("_", " ")}
+                          {common(t_item.status)}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
                         <div className="space-y-1">
-                          <div className="text-[9px] text-text-tertiary font-black uppercase tracking-[0.2em]">
-                            Format
+                          <div className="text-xs text-text-tertiary font-black uppercase tracking-[0.2em]">
+                            {t("format")}
                           </div>
                           <div className="text-xs font-black text-white uppercase">
-                            {t.match_type}
+                            {common(`match_${t_item.match_type}`)}
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <div className="text-[9px] text-text-tertiary font-black uppercase tracking-[0.2em]">
-                            Participant
+                          <div className="text-xs text-text-tertiary font-black uppercase tracking-[0.2em]">
+                            {t("participant")}
                           </div>
                           <div className="text-xs font-black text-white uppercase">
-                            {t.participant_type}
+                            {common(`type_${t_item.participant_type}`)}
                           </div>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-2 text-[10px] text-text-tertiary font-black uppercase tracking-[0.2em]">
+                      <div className="flex items-center gap-2 text-xs text-text-tertiary font-black uppercase tracking-[0.2em]">
                         <Plus className="h-3 w-3 text-brand-primary" />
                         <span>
-                          {(t.participants as unknown as { count: number }[])?.[0]
-                            ?.count || 0}{" "}
-                          / {t.size} Slots Filled
+                          {(
+                            t_item.participants as unknown as {
+                              count: number;
+                            }[]
+                          )?.[0]?.count || 0}{" "}
+                          / {t_item.size} {common("slots_filled")}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-text-tertiary font-black uppercase tracking-[0.2em]">
+                      <div className="flex items-center gap-2 text-xs text-text-tertiary justify-end font-black uppercase tracking-[0.2em]">
                         <Calendar className="h-3 w-3 text-brand-primary" />
                         <span>
-                          {new Date(t.created_at).toLocaleDateString()}
+                          {new Date(t_item.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -214,32 +219,6 @@ export default async function ProjectDetailPage({
           )}
         </div>
       </section>
-
-      {/* QUICK STATS / INFO BOX */}
-      <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
-        <div className="flex items-center gap-6">
-          <div className="h-16 w-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary border border-brand-primary/20">
-            <Info className="h-8 w-8" />
-          </div>
-          <div>
-            <h4 className="font-display text-xl font-black uppercase tracking-tight text-white">
-              Project Insights
-            </h4>
-            <p className="text-sm text-text-tertiary font-medium">
-              Detailed reports and player analytics are available in the main
-              dashboard.
-            </p>
-          </div>
-        </div>
-        <Link href="/organizer/dashboard">
-          <Button
-            variant="outline"
-            className="border-white/10 hover:bg-white/5 font-black uppercase tracking-widest text-[10px] px-8 h-12 rounded-xl transition-all"
-          >
-            View Dashboard Stats
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 }

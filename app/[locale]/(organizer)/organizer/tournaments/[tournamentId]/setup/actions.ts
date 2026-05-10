@@ -3,9 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getLocale } from "next-intl/server";
 
-export async function saveTournamentSetup(formData: FormData): Promise<any> {
+interface ActionResult {
+  success?: boolean;
+  error?: string;
+}
+
+export async function saveTournamentSetup(
+  formData: FormData,
+): Promise<ActionResult | void> {
   const supabase = await createClient();
   const tournament_id = formData.get("tournament_id") as string;
   const stage_name = formData.get("stage_name") as string;
@@ -21,7 +27,7 @@ export async function saveTournamentSetup(formData: FormData): Promise<any> {
     const { error: tournamentError } = await supabase
       .from("tournaments")
       .update({
-        participant_type: participant_type as any,
+        participant_type: participant_type as "player" | "team",
         team_min_players,
         team_max_players,
       })
@@ -43,14 +49,23 @@ export async function saveTournamentSetup(formData: FormData): Promise<any> {
     if (existingStages?.length) {
       const { error: updateError } = await supabase
         .from("stages")
-        .update({ name: stage_name, stage_type: stage_type as any })
+        .update({
+          name: stage_name,
+          stage_type: stage_type as
+            | "single_elimination"
+            | "double_elimination"
+            | "round_robin",
+        })
         .eq("id", existingStages[0].id);
       error = updateError;
     } else {
       const { error: insertError } = await supabase.from("stages").insert({
         tournament_id,
         name: stage_name,
-        stage_type: stage_type as any,
+        stage_type: stage_type as
+          | "single_elimination"
+          | "double_elimination"
+          | "round_robin",
         order_index: 1,
       });
       error = insertError;
@@ -61,18 +76,18 @@ export async function saveTournamentSetup(formData: FormData): Promise<any> {
       return { error: error.message };
     }
 
-    const locale = await getLocale();
     revalidatePath(`/organizer/tournaments/${tournament_id}/setup`);
-    redirect(`/${locale}/organizer/tournaments/${tournament_id}/setup?step=2`);
-  } catch (e: any) {
-    if (e.message === "NEXT_REDIRECT") throw e;
-    return { error: e.message || "An unexpected error occurred" };
+    redirect(`/organizer/tournaments/${tournament_id}/setup?step=2`);
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.message === "NEXT_REDIRECT") throw e;
+    return { error: error.message || "An unexpected error occurred" };
   }
 }
 
 export async function saveRegistrationSettings(
   formData: FormData,
-): Promise<any> {
+): Promise<ActionResult | void> {
   const supabase = await createClient();
   const tournament_id = formData.get("tournament_id") as string;
   const registration_enabled = formData.get("registration_enabled") === "on";
@@ -85,7 +100,7 @@ export async function saveRegistrationSettings(
       .from("tournaments")
       .update({
         registration_enabled,
-        registration_mode: registration_mode as any,
+        registration_mode: registration_mode as "auto" | "manual",
         registration_deadline: registration_deadline || null,
         status: registration_enabled ? "registration_open" : "draft",
       })
@@ -96,16 +111,18 @@ export async function saveRegistrationSettings(
       return { error: error.message };
     }
 
-    const locale = await getLocale();
     revalidatePath(`/organizer/tournaments/${tournament_id}/setup`);
-    redirect(`/${locale}/organizer/tournaments/${tournament_id}/setup?step=3`);
-  } catch (e: any) {
-    if (e.message === "NEXT_REDIRECT") throw e;
-    return { error: e.message || "An unexpected error occurred" };
+    redirect(`/organizer/tournaments/${tournament_id}/setup?step=3`);
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.message === "NEXT_REDIRECT") throw e;
+    return { error: error.message || "An unexpected error occurred" };
   }
 }
 
-export async function publishTournament(formData: FormData): Promise<any> {
+export async function publishTournament(
+  formData: FormData,
+): Promise<ActionResult | void> {
   const supabase = await createClient();
   const tournament_id = formData.get("tournament_id") as string;
 
@@ -136,11 +153,11 @@ export async function publishTournament(formData: FormData): Promise<any> {
       return { error: error.message };
     }
 
-    const locale = await getLocale();
     revalidatePath(`/organizer/tournaments/${tournament_id}`);
-    redirect(`/${locale}/organizer/tournaments/${tournament_id}`);
-  } catch (e: any) {
-    if (e.message === "NEXT_REDIRECT") throw e;
-    return { error: e.message || "An unexpected error occurred" };
+    redirect(`/organizer/tournaments/${tournament_id}`);
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.message === "NEXT_REDIRECT") throw e;
+    return { error: error.message || "An unexpected error occurred" };
   }
 }

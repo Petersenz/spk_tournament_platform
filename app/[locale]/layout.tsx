@@ -16,7 +16,11 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export async function generateMetadata({ params }: any) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
 
@@ -44,7 +48,7 @@ export default async function LocaleLayout({
   const { locale } = await params;
 
   // Ensure that the incoming `locale` is valid
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as "en" | "th")) {
     notFound();
   }
 

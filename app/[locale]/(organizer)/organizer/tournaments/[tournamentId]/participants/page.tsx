@@ -1,33 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/lib/i18n/routing";
-import { Button } from "@/components/ui/button";
-import {
-  Check,
-  X,
-  UserPlus,
-  Trash2,
-  Shuffle,
-  Save,
-  ShieldCheck,
-} from "lucide-react";
-import {
-  approveRegistration,
-  rejectRegistration,
-  deleteParticipant,
-  randomizeSeeds,
-  updateSeed,
-} from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/actions";
-import { ApproveButton } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/ApproveButton";
-import { DeleteParticipantButton } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/DeleteParticipantButton";
-import { Input } from "@/components/ui/input";
+import { Users, ShieldCheck, Clock, UserCheck } from "lucide-react";
+import { AddParticipantModal } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/AddParticipantModal";
+import { ParticipantsTable } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/ParticipantsTable";
+import { RegistrationsList } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/participants/RegistrationsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getTranslations } from "next-intl/server";
 
 export default async function TournamentParticipantsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tournamentId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { tournamentId } = await params;
+  const { tab = "approved" } = await searchParams;
+  const t = await getTranslations("Organizer.participants");
   const supabase = await createClient();
   const {
     data: { user },
@@ -51,298 +41,168 @@ export default async function TournamentParticipantsPage({
     .eq("id", tournamentId)
     .single();
 
-  // Permission Check: Owner or Admin
+  // Permission Check
   if (!tournament || (!isAdmin && tournament.projects.owner_id !== user.id)) {
     notFound();
   }
 
-  // Fetch Pending Registrations (Waitlist)
-  const { data: registrations } = await supabase
-    .from("registrations")
-    .select(
-      `
-      *,
-      profiles:user_id (
-        nickname,
-        avatar_url
-      ),
-      participants:participant_id (
-        name
-      )
-    `,
-    )
-    .eq("tournament_id", tournamentId)
-    .eq("status", "pending");
-
-  // Fetch Current Participants
+  // Fetch Current Participants with Players
   const { data: participants } = await supabase
     .from("participants")
-    .select("*")
+    .select("*, players(*)")
     .eq("tournament_id", tournamentId)
-    .order("seed", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  // Fetch Pending registrations with profile info
+  const { data: registrations } = await supabase
+    .from("registrations")
+    .select("*, profiles:user_id(nickname, avatar_url)")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "pending")
     .order("created_at", { ascending: true });
 
-  // Fetch Leave Requests
-  const { data: leaveRequests } = await supabase
-    .from("registrations")
-    .select("user_id")
-    .eq("tournament_id", tournamentId)
-    .eq("message", "leave_request");
-
-  const leaveRequestUserIds = new Set(
-    leaveRequests?.map((r) => r.user_id) || [],
-  );
+  const pendingCount = registrations?.length || 0;
+  const approvedCount = participants?.length || 0;
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div>
+    <div className="max-w-[1400px] mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20">
+      {/* TOP HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col gap-1">
           <Link
             href={`/organizer/tournaments/${tournamentId}`}
-            className="text-[10px] font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand-primary flex items-center transition-colors mb-4"
+            className="text-[11px] font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand-primary transition-all flex items-center gap-2 mb-4"
           >
-            ← Back to Dashboard
+            <span className="text-lg">←</span> {t("back_to_dashboard")}
           </Link>
-          <div className="flex items-center gap-4">
-            <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
-              Participant Center
+          <div className="flex items-center gap-6">
+            <h1 className="font-display text-5xl lg:text-7xl font-black uppercase tracking-tighter text-white">
+              {t("tournament_title")}
             </h1>
             {isAdmin && (
-              <span className="bg-brand-primary/20 text-brand-primary text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-brand-primary/20 flex items-center gap-2">
-                <ShieldCheck className="h-3 w-3" /> Admin View
+              <span className="bg-brand-primary/10 text-brand-primary text-[10px] px-4 py-2 rounded-full font-black uppercase tracking-widest border border-brand-primary/20 flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" /> {t("admin_mode")}
               </span>
             )}
           </div>
-          <p className="text-text-secondary mt-2 font-medium">
-            Managing entries for{" "}
-            <span className="text-white font-bold">{tournament.name}</span>
-          </p>
         </div>
-        <Link href={`/organizer/tournaments/${tournamentId}/participants/new`}>
-          <Button className="bg-brand-primary text-white hover:bg-white hover:text-black h-16 px-8 rounded-2xl font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(244,0,9,0.3)]">
-            <UserPlus className="mr-2 h-5 w-5" /> Add Participant
-          </Button>
-        </Link>
+
+        <div className="flex items-center gap-3">
+          <AddParticipantModal
+            tournamentId={tournamentId}
+            participantType={tournament.participant_type}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* LEFT: PENDING REGISTRATIONS */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white flex items-center gap-3">
-              Waitlist
-              <span className="text-xs bg-white/10 text-text-tertiary px-3 py-1 rounded-full font-black">
-                {registrations?.length || 0}
-              </span>
-            </h2>
+      {/* QUICK STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] p-10 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-success/50 transition-all duration-500">
+          <div className="relative z-10">
+            <div className="text-xs font-black text-text-tertiary uppercase tracking-[0.3em] mb-3">
+              {t("confirmed")}
+            </div>
+            <div className="text-5xl font-black text-white uppercase tracking-tighter">
+              {approvedCount}
+            </div>
           </div>
+          <UserCheck className="h-14 w-14 text-success/10 group-hover:text-success/20 group-hover:scale-110 transition-all duration-700" />
+          <div className="absolute bottom-0 left-0 h-1 bg-success w-full opacity-10 group-hover:opacity-100 transition-opacity"></div>
+        </div>
 
-          <div className="space-y-4">
-            {registrations?.length === 0 ? (
-              <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] bg-white/2 text-text-tertiary">
-                <p className="text-[10px] font-black uppercase tracking-widest">
-                  No pending requests
-                </p>
+        <div className="bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] p-10 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-warning/50 transition-all duration-500">
+          <div className="relative z-10">
+            <div className="text-xs font-black text-text-tertiary uppercase tracking-[0.3em] mb-3">
+              {t("pending")}
+            </div>
+            <div className="text-5xl font-black text-white uppercase tracking-tighter">
+              {pendingCount}
+            </div>
+          </div>
+          <Clock className="h-14 w-14 text-warning/10 group-hover:text-warning/20 group-hover:scale-110 transition-all duration-700" />
+          {pendingCount > 0 && (
+            <div className="absolute top-6 right-6 h-3 w-3 bg-warning rounded-full animate-ping"></div>
+          )}
+          <div className="absolute bottom-0 left-0 h-1 bg-warning w-full opacity-10 group-hover:opacity-100 transition-opacity"></div>
+        </div>
+
+        <div className="bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] p-10 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-brand-primary/50 transition-all duration-500">
+          <div className="relative z-10">
+            <div className="text-xs font-black text-text-tertiary uppercase tracking-[0.3em] mb-3">
+              {t("capacity")}
+            </div>
+            <div className="text-5xl font-black text-white uppercase tracking-tighter">
+              {tournament.size}
+            </div>
+          </div>
+          <Users className="h-14 w-14 text-brand-primary/10 group-hover:text-brand-primary/20 group-hover:scale-110 transition-all duration-700" />
+          <div className="absolute bottom-0 left-0 h-1 bg-brand-primary w-full opacity-10 group-hover:opacity-100 transition-opacity"></div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA WITH TABS */}
+      <Tabs defaultValue={tab} className="w-full space-y-10">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+          <TabsList className="bg-[#0c0c0e] border border-white/5 p-2 rounded-[2rem] h-auto backdrop-blur-3xl shadow-xl">
+            <TabsTrigger
+              value="approved"
+              className="px-10 py-5 rounded-[1.5rem] data-[state=active]:bg-brand-primary data-[state=active]:text-white font-black uppercase tracking-widest text-[11px] transition-all"
+            >
+              {t("tab_confirmed")} ({approvedCount})
+            </TabsTrigger>
+            <TabsTrigger
+              value="pending"
+              className="px-10 py-5 rounded-[1.5rem] data-[state=active]:bg-brand-primary data-[state=active]:text-white font-black uppercase tracking-widest text-[11px] transition-all relative"
+            >
+              {t("tab_requests")} ({pendingCount})
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 bg-white text-brand-primary rounded-full flex items-center justify-center text-[9px] shadow-lg">
+                  {pendingCount}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
+            <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>
+            {t("realtime_status")}
+          </div>
+        </div>
+
+        <TabsContent
+          value="approved"
+          className="mt-0 focus-visible:outline-none"
+        >
+          <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <ParticipantsTable
+              participants={participants || []}
+              tournamentId={tournamentId}
+              tournamentSize={tournament.size}
+              pendingCount={pendingCount}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent
+          value="pending"
+          className="mt-0 focus-visible:outline-none"
+        >
+          <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] min-h-[400px]">
+            <div className="p-10 border-b border-white/5 flex items-center justify-between">
+              <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
+                {t("tab_requests")}
+              </h2>
+              <div className="text-[10px] font-black uppercase tracking-widest text-text-tertiary bg-white/5 px-4 py-2 rounded-xl">
+                {t("manual_review")}
               </div>
-            ) : (
-              registrations?.map((reg) => {
-                const participantName = reg.participants?.name;
-                const profile = Array.isArray(reg.profiles)
-                  ? reg.profiles[0]
-                  : reg.profiles;
-                const displayName =
-                  participantName ||
-                  profile?.nickname ||
-                  `Player #${reg.user_id.slice(0, 5)}`;
-
-                return (
-                  <div
-                    key={reg.id}
-                    className="bg-[#0c0c0e] border border-white/5 rounded-[2rem] p-6 flex items-center justify-between group hover:border-brand-primary/30 transition-all shadow-xl"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-brand-primary/10 flex items-center justify-center font-black text-brand-primary border border-brand-primary/20 text-lg shrink-0">
-                        {displayName[0]?.toUpperCase()}
-                      </div>
-                      <div className="truncate">
-                        <div className="font-black text-white uppercase tracking-tight truncate">
-                          {displayName}
-                        </div>
-                        <div className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest">
-                          {participantName && profile
-                            ? `${profile.nickname} • `
-                            : ""}
-                          {new Date(reg.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <ApproveButton
-                        registrationId={reg.id}
-                        tournamentId={tournamentId}
-                      />
-                      <form
-                        action={async (formData) => {
-                          "use server";
-                          await rejectRegistration(formData);
-                        }}
-                      >
-                        <input
-                          type="hidden"
-                          name="registration_id"
-                          value={reg.id}
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl"
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                      </form>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+            </div>
+            <RegistrationsList
+              registrations={registrations || []}
+              tournamentId={tournamentId}
+            />
           </div>
-        </div>
-
-        {/* RIGHT: CURRENT PARTICIPANTS LIST */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white flex items-center gap-3">
-              Confirmed Arena
-              <span className="text-xs bg-white/10 text-text-tertiary px-3 py-1 rounded-full font-black">
-                {participants?.length || 0} / {tournament.size}
-              </span>
-            </h2>
-            {participants && participants.length > 0 && (
-              <form
-                action={async (formData) => {
-                  "use server";
-                  await randomizeSeeds(formData);
-                }}
-              >
-                <input
-                  type="hidden"
-                  name="tournament_id"
-                  value={tournamentId}
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-[10px] font-black uppercase tracking-widest text-text-tertiary hover:text-brand-primary transition-colors"
-                >
-                  <Shuffle className="mr-2 h-4 w-4" /> Randomize Seeds
-                </Button>
-              </form>
-            )}
-          </div>
-
-          <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white/2 border-b border-white/5">
-                  <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary w-32">
-                    Seed
-                  </th>
-                  <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                    Competitor
-                  </th>
-                  <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                    Status
-                  </th>
-                  <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {participants?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-10 py-20 text-center text-text-tertiary uppercase font-black tracking-widest text-xs"
-                    >
-                      The arena is empty. Start approving players or add them
-                      manually.
-                    </td>
-                  </tr>
-                ) : (
-                  participants?.map((p) => (
-                    <tr
-                      key={p.id}
-                      className="hover:bg-white/2 transition-all group"
-                    >
-                      <td className="px-10 py-6 w-32">
-                        <form
-                          action={async (formData) => {
-                            "use server";
-                            await updateSeed(formData);
-                          }}
-                          className="flex items-center gap-2"
-                        >
-                          <input
-                            type="hidden"
-                            name="participant_id"
-                            value={p.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="tournament_id"
-                            value={tournamentId}
-                          />
-                          <Input
-                            name="seed"
-                            type="number"
-                            defaultValue={p.seed || ""}
-                            className="h-10 w-16 bg-white/5 border-white/10 text-center px-1 rounded-lg text-white font-black"
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-text-tertiary hover:text-brand-primary"
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
-                        </form>
-                      </td>
-                      <td className="px-10 py-6">
-                        <div className="font-black text-white uppercase tracking-tight text-lg">
-                          {p.name}
-                        </div>
-                        <div className="text-[9px] text-text-tertiary uppercase font-bold tracking-widest">
-                          ID: {p.id.slice(0, 8)}
-                        </div>
-                      </td>
-                      <td className="px-10 py-6">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] px-3 py-1 rounded-full bg-success/10 text-success uppercase font-black border border-success/20 tracking-wider">
-                            {p.status}
-                          </span>
-                          {leaveRequestUserIds.has(p.user_id) && (
-                            <span className="text-[9px] px-3 py-1 rounded-full bg-destructive/10 text-destructive uppercase font-black border border-destructive/20 tracking-wider animate-pulse">
-                              Requests Leave
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-10 py-6 text-right">
-                        <DeleteParticipantButton
-                          participantId={p.id}
-                          tournamentId={tournamentId}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Link } from "@/lib/i18n/routing";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ProjectForm } from "@/components/project/ProjectForm";
 import { updateProject } from "../../actions";
+import { Link } from "@/lib/i18n/routing";
+import { ChevronLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export default async function EditProjectPage({
   params,
@@ -12,6 +12,7 @@ export default async function EditProjectPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
+  const t = await getTranslations("Organizer.projects");
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,67 +29,32 @@ export default async function EditProjectPage({
     notFound();
   }
 
+  // Bind the ID to the action
+  const boundUpdateAction = async (formData: FormData) => {
+    "use server";
+    return updateProject(projectId, formData);
+  };
+
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <div>
+    <div className="space-y-12 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4">
         <Link
           href={`/organizer/projects/${projectId}`}
-          className="text-sm text-text-tertiary hover:text-brand-primary"
+          className="text-[10px] font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand-primary flex items-center transition-colors"
         >
-          ← Back to Project
+          <ChevronLeft className="mr-1 h-3 w-3" /> {t("back")}
         </Link>
-        <h1 className="font-display text-3xl font-bold mt-4">Edit Project</h1>
+        <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
+          {t("new_title")}
+        </h1>
+        <p className="text-text-secondary font-medium">{t("new_subtitle")}</p>
       </div>
 
-      <div className="bg-bg-secondary border border-border-primary rounded-xl p-8">
-        <form
-          action={async (formData) => {
-            "use server";
-            await updateProject(projectId, formData);
-          }}
-          className="space-y-6"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="name">Project Name</Label>
-            <Input
-              id="name"
-              name="name"
-              defaultValue={project.name}
-              required
-              className="bg-bg-tertiary border-border-primary"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
-            <textarea
-              id="description"
-              name="description"
-              rows={4}
-              defaultValue={project.description || ""}
-              className="w-full rounded-md bg-bg-tertiary border border-border-primary p-3 text-sm focus:border-brand-primary outline-none transition-all"
-            />
-          </div>
-
-          <div className="pt-4 flex gap-4">
-            <Button
-              type="submit"
-              className="flex-1 bg-brand-primary text-white hover:bg-brand-hover"
-            >
-              Save Changes
-            </Button>
-            <Link href={`/organizer/projects/${projectId}`} className="flex-1">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-border-primary"
-              >
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </form>
-      </div>
+      <ProjectForm
+        initialData={project}
+        submitAction={boundUpdateAction}
+        cancelHref={`/organizer/projects/${projectId}`}
+      />
     </div>
   );
 }

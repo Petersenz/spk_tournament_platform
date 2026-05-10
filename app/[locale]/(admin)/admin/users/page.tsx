@@ -1,12 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  Users,
-  Shield,
-  ShieldCheck,
-  Mail,
-  Calendar,
-  Search,
-} from "lucide-react";
+import { Users, Shield, ShieldCheck, Calendar, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getTranslations } from "next-intl/server";

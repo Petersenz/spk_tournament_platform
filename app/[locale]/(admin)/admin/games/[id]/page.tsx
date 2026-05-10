@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { GameForm } from "../new/GameForm";
+import { GameForm } from "@/components/admin/GameForm";
 import { Link } from "@/lib/i18n/routing";
 import { ChevronLeft } from "lucide-react";
 
@@ -23,7 +23,7 @@ export default async function EditGamePage({
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 max-w-6xl mx-auto">
       <div className="flex flex-col gap-4">
         <Link
           href="/admin/games"

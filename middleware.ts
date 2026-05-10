@@ -6,10 +6,15 @@ import { updateSession } from "./lib/supabase/middleware";
 const intlMiddleware = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-  // First, we run the next-intl middleware to handle locales and get the localized response
+  // First, handle locales
   const response = intlMiddleware(request);
 
-  // Then, we pass the request and the localized response to Supabase to manage session & protection
+  // If next-intl is redirecting (e.g. / -> /en), return immediately
+  if (response.status === 307 || response.status === 308) {
+    return response;
+  }
+
+  // Then, handle Supabase session
   return await updateSession(request, response);
 }
 

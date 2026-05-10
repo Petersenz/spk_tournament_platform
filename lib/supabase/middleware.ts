@@ -49,8 +49,12 @@ export async function updateSession(
       normalizedPath.startsWith("/player"))
   ) {
     // no user, potentially respond by redirecting the user to the login page
+    const locale = path.split("/")[1] || "en";
+    const isLocale = ["en", "th"].includes(locale);
+    const redirectLocale = isLocale ? `/${locale}` : "";
+
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = `${redirectLocale}/login`;
     return NextResponse.redirect(url);
   }
 

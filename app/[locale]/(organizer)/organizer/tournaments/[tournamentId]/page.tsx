@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/lib/i18n/routing";
 import { Button } from "@/components/ui/button";
-import { generateBracket } from "./actions";
 import { BracketView } from "@/components/BracketView";
 import {
   Gamepad2,
@@ -10,19 +9,22 @@ import {
   Swords,
   Trophy,
   Settings,
-  ChevronLeft,
-  Calendar,
   ShieldCheck,
   LayoutDashboard,
   Share2,
-  Trash2,
   Edit3,
+  AlignLeft,
+  FileText,
+  Clock,
+  Monitor,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
-import { deleteTournament } from "./actions";
 import { DeleteTournamentButton } from "./DeleteTournamentButton";
 import { GenerateBracketButton } from "./GenerateBracketButton";
 import { getTranslations } from "next-intl/server";
+import { cn } from "@/lib/utils";
+import { ParticipantListTable } from "@/components/tournament/ParticipantListTable";
 
 export default async function TournamentDashboardPage({
   params,
@@ -35,7 +37,7 @@ export default async function TournamentDashboardPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("*, projects(*), games(*)") // Get everything from games
+    .select("*, projects(*), games(*), tournament_platforms(platforms(*))")
     .eq("id", tournamentId)
     .single();
 
@@ -74,6 +76,15 @@ export default async function TournamentDashboardPage({
   const gameCover = tournament.games?.cover_url;
   const gameLogo = tournament.games?.logo_url;
 
+  // Format date helper
+  const fDate = (dateStr?: string) => {
+    if (!dateStr) return "N/A";
+    return new Date(dateStr).toLocaleString([], {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary pb-20 space-y-12 animate-in fade-in duration-1000">
       {/* CINEMATIC HERO HEADER */}
@@ -99,7 +110,7 @@ export default async function TournamentDashboardPage({
 
         <div className="relative z-10 p-8 lg:p-14">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-8 flex-1 min-w-0">
               {/* Game Branding */}
               <div className="relative h-32 w-32 shrink-0 group">
                 <div className="absolute inset-0 bg-brand-primary rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
@@ -122,7 +133,7 @@ export default async function TournamentDashboardPage({
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-3">
                   <span
                     className={`text-xs px-5 py-2 rounded-full font-bold uppercase tracking-[0.2em] shadow-lg ${
@@ -133,26 +144,26 @@ export default async function TournamentDashboardPage({
                           : "bg-white/10 text-text-tertiary"
                     }`}
                   >
-                    {t(`status_${tournament.status}`, { ns: "Tournament" })}
+                    {t(`status_${tournament.status}`)}
                   </span>
-                  <span className="text-brand-primary font-bold uppercase tracking-[0.3em] text-xs flex items-center gap-2">
+                  <span className="text-brand-primary font-bold uppercase tracking-[0.3em] text-sm flex items-center gap-2">
                     <span className="h-1 w-8 bg-brand-primary/30"></span>
                     {tournament.games?.name || t("custom_arena")}
                   </span>
                 </div>
-                <h1 className="font-display text-5xl lg:text-7xl font-black uppercase tracking-tighter text-white drop-shadow-2xl">
+                <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tighter text-white drop-shadow-2xl break-words">
                   {tournament.name}
                 </h1>
-                <div className="flex flex-wrap items-center gap-6 text-text-tertiary text-xs font-bold uppercase tracking-[0.2em]">
+                <div className="flex flex-wrap items-center gap-6 text-text-tertiary text-sm font-bold uppercase tracking-[0.2em]">
                   <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
                     <Users className="h-4 w-4 text-brand-primary" />
                     {t("slots", { count: tournament.size })}
                   </span>
-                  <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                    <Swords className="h-4 w-4 text-brand-primary" />
+                  <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/5 text-white">
+                    <Zap className="h-4 w-4 text-brand-primary" />
                     {tournament.match_type.toUpperCase()}
                   </span>
-                  <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                  <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/5 text-white">
                     <ShieldCheck className="h-4 w-4 text-brand-primary" />
                     {tournament.participant_type.toUpperCase()}
                   </span>
@@ -160,37 +171,29 @@ export default async function TournamentDashboardPage({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+            <div className="flex flex-wrap gap-3 w-full lg:w-auto lg:justify-end">
               <Link href={`/organizer/tournaments/${tournament.id}/setup`}>
                 <Button
                   variant="outline"
-                  className="h-16 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-xs group transition-all"
+                  className="h-12 lg:h-16 px-6 lg:px-8 rounded-2xl border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-[10px] lg:text-xs group transition-all"
                 >
                   <Settings className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform" />{" "}
                   {t("config")}
                 </Button>
               </Link>
-              <Link href={`/tournaments/${tournament.id}`} target="_blank">
-                <Button
-                  variant="outline"
-                  className="h-16 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-xs"
-                >
-                  <Share2 className="mr-2 h-4 w-4" /> {t("live_page")}
-                </Button>
-              </Link>
-              <DeleteTournamentButton tournamentId={tournamentId} />
               <Link href={`/organizer/tournaments/${tournament.id}/edit`}>
                 <Button
                   variant="outline"
-                  className="h-16 px-8 rounded-2xl border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-xs"
+                  className="h-12 lg:h-16 px-6 lg:px-8 rounded-2xl border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-[10px] lg:text-xs"
                 >
                   <Edit3 className="mr-2 h-4 w-4" /> {t("edit_info")}
                 </Button>
               </Link>
+              <DeleteTournamentButton tournamentId={tournamentId} />
               <Link
                 href={`/organizer/tournaments/${tournament.id}/participants`}
               >
-                <Button className="h-16 px-10 rounded-2xl bg-brand-primary text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest text-xs shadow-[0_0_30px_rgba(244,0,9,0.4)] relative group transition-all">
+                <Button className="h-12 lg:h-16 px-8 lg:px-10 rounded-2xl bg-brand-primary text-white hover:bg-white hover:text-black font-bold uppercase tracking-widest text-[10px] lg:text-xs shadow-[0_0_30px_rgba(244,0,9,0.4)] relative group transition-all">
                   {t("manage_entries")}
                   {registrationCount ? (
                     <span className="absolute -top-3 -right-3 h-8 w-8 bg-white text-brand-primary rounded-full flex items-center justify-center font-bold text-xs shadow-2xl animate-bounce">
@@ -210,7 +213,7 @@ export default async function TournamentDashboardPage({
           <div className="bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] p-2 flex gap-2 backdrop-blur-3xl shadow-xl">
             <Link
               href={`/organizer/tournaments/${tournament.id}`}
-              className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.8rem] bg-brand-primary text-white font-black uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(244,0,9,0.3)] transition-all"
+              className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.8rem] bg-brand-primary text-white font-black uppercase tracking-widest text-xs shadow-[0_0_20px_rgba(244,0,9,0.3)] transition-all"
             >
               <LayoutDashboard className="h-4 w-4" /> {t("live_brackets")}
             </Link>
@@ -221,12 +224,14 @@ export default async function TournamentDashboardPage({
               <Users className="h-4 w-4 group-hover:text-brand-primary transition-colors" />{" "}
               {t("manage_entries")} ({participantCount || 0})
             </Link>
-            <button
-              disabled
-              className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.8rem] text-text-tertiary/20 font-bold uppercase tracking-widest text-xs cursor-not-allowed"
+            <Link
+              href={`/tournaments/${tournament.id}`}
+              target="_blank"
+              className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.8rem] text-text-tertiary hover:text-white hover:bg-white/5 font-bold uppercase tracking-widest text-xs transition-all group"
             >
-              <Calendar className="h-4 w-4" /> {t("match_recorded")}
-            </button>
+              <Share2 className="h-4 w-4 group-hover:text-brand-primary transition-colors" />{" "}
+              {t("live_page")}
+            </Link>
           </div>
         </div>
 
@@ -250,6 +255,148 @@ export default async function TournamentDashboardPage({
                 width: `${((participantCount || 0) / tournament.size) * 100}%`,
               }}
             ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* TOURNAMENT INFO SECTION (NEW) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Description & Rules */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] p-10 shadow-2xl space-y-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-brand-primary">
+                <AlignLeft className="h-5 w-5" />
+                <h3 className="text-sm font-black uppercase tracking-widest">
+                  {t("description")}
+                </h3>
+              </div>
+              <p className="text-text-secondary leading-relaxed whitespace-pre-wrap font-medium">
+                {tournament.description || t("no_description")}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-warning">
+                  <FileText className="h-5 w-5" />
+                  <h3 className="text-sm font-black uppercase tracking-widest">
+                    {t("rules")}
+                  </h3>
+                </div>
+                <p className="text-xs text-text-tertiary leading-relaxed whitespace-pre-wrap font-medium">
+                  {tournament.rules || t("no_rules")}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-success">
+                  <Trophy className="h-5 w-5" />
+                  <h3 className="text-sm font-black uppercase tracking-widest">
+                    {t("prizes")}
+                  </h3>
+                </div>
+                <p className="text-xs text-text-tertiary leading-relaxed whitespace-pre-wrap font-medium">
+                  {tournament.prize_info || t("no_prizes")}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Schedule & Platforms */}
+        <div className="lg:col-span-1 space-y-8">
+          <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] p-10 shadow-2xl space-y-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 text-info">
+                <Clock className="h-5 w-5" />
+                <h3 className="text-sm font-black uppercase tracking-widest">
+                  {t("schedule")}
+                </h3>
+              </div>
+
+              <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-white/5">
+                {[
+                  {
+                    label: t("reg_deadline"),
+                    value: tournament.registration_deadline,
+                    icon: <Users className="h-3 w-3" />,
+                    color: "text-warning",
+                  },
+                  {
+                    label: t("start_date"),
+                    value: tournament.start_date,
+                    icon: <Zap className="h-3 w-3" />,
+                    color: "text-brand-primary",
+                  },
+                  {
+                    label: t("end_date"),
+                    value: tournament.end_date,
+                    icon: <Trophy className="h-3 w-3" />,
+                    color: "text-success",
+                  },
+                ].map((item, idx) => (
+                  <div key={idx} className="relative pl-10 group">
+                    <div
+                      className={cn(
+                        "absolute left-0 h-6 w-6 rounded-full flex items-center justify-center border border-white/10 bg-[#0c0c0e] z-10 group-hover:scale-110 transition-transform",
+                        item.color,
+                      )}
+                    >
+                      {item.icon}
+                    </div>
+                    <div className="text-xs font-black text-text-tertiary uppercase tracking-widest mb-1">
+                      {item.label}
+                    </div>
+                    <div className="text-sm font-bold text-white">
+                      {fDate(item.value)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-8 border-t border-white/5 space-y-4">
+              <div className="flex items-center gap-3 text-text-tertiary">
+                <Monitor className="h-5 w-5" />
+                <h3 className="text-sm font-black uppercase tracking-widest">
+                  {t("platforms")}
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  tournament.tournament_platforms as
+                    | { platforms: { id: string; name: string } }[]
+                    | undefined
+                )?.map((tp) => (
+                  <span
+                    key={tp.platforms.id}
+                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-white"
+                  >
+                    {tp.platforms.name}
+                  </span>
+                )) || (
+                  <span className="text-xs text-text-tertiary italic">N/A</span>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-8 border-t border-white/5 flex items-center justify-between">
+              <div className="text-xs font-black text-text-tertiary uppercase tracking-widest">
+                {t("reg_mode")}
+              </div>
+              <div
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border",
+                  tournament.registration_mode === "auto"
+                    ? "bg-success/10 text-success border-success/20"
+                    : "bg-warning/10 text-warning border-warning/20",
+                )}
+              >
+                {tournament.registration_mode === "auto"
+                  ? t("mode_auto")
+                  : t("mode_manual")}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -325,6 +472,15 @@ export default async function TournamentDashboardPage({
             )}
           </div>
         </div>
+      </div>
+
+      {/* PARTICIPANTS TABLE */}
+      <div className="max-w-[1400px] mx-auto">
+        <ParticipantListTable
+          tournamentId={tournamentId}
+          isOrganizer={true}
+          participantType={tournament.participant_type}
+        />
       </div>
     </div>
   );

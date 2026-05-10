@@ -1,10 +1,10 @@
-import { GameForm } from "./GameForm";
+import { GameForm } from "@/components/admin/GameForm";
 import { Link } from "@/lib/i18n/routing";
 import { ChevronLeft } from "lucide-react";
 
 export default function NewGamePage() {
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 max-w-6xl mx-auto">
       <div className="flex flex-col gap-4">
         <Link
           href="/admin/games"
@@ -16,7 +16,7 @@ export default function NewGamePage() {
           Register Title
         </h1>
         <p className="text-text-secondary font-medium">
-          Add a new game to the official platform library.
+          Add a new competitive game to the official platform library.
         </p>
       </div>
 

@@ -1,12 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  Trophy,
-  Users,
-  Gamepad2,
-  BarChart3,
-  TrendingUp,
-  ShieldAlert,
-} from "lucide-react";
+import { Trophy, Users, Gamepad2, BarChart3, ShieldAlert } from "lucide-react";
 import { Link } from "@/lib/i18n/routing";
 import { getTranslations } from "next-intl/server";
 
