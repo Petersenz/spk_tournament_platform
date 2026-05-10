@@ -180,7 +180,6 @@ export default async function TournamentParticipantsPage({
               participants={participants || []}
               tournamentId={tournamentId}
               tournamentSize={tournament.size}
-              pendingCount={pendingCount}
               teamMaxPlayers={tournament.team_max_players || 5}
             />
           </div>
