@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { GameForm } from "@/components/admin/GameForm";
 import { Link } from "@/lib/i18n/routing";
 import { ChevronLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export default async function EditGamePage({
   params,
@@ -12,6 +13,7 @@ export default async function EditGamePage({
   const { id } = await params;
   const supabase = await createClient();
 
+  const t = await getTranslations("Admin.games_list");
   const { data: game } = await supabase
     .from("games")
     .select("*")
@@ -29,13 +31,13 @@ export default async function EditGamePage({
           href="/admin/games"
           className="text-[10px] font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand-primary flex items-center transition-colors"
         >
-          <ChevronLeft className="mr-1 h-3 w-3" /> Back to Library
+          <ChevronLeft className="mr-1 h-3 w-3" /> {t("back_to_list")}
         </Link>
         <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
-          Edit Title
+          {t("edit_title")}
         </h1>
         <p className="text-text-secondary font-medium">
-          Update assets and metadata for {game.name}.
+          {t("edit_subtitle", { name: game.name })}
         </p>
       </div>
 

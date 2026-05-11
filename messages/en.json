@@ -628,6 +628,45 @@
     "platform_icon": "Icon URL",
     "platforms_subtitle": "Define the hardware ecosystems where matches take place.",
     "confirm_delete": "Are you sure you want to delete this item?",
-    "save_success": "Saved successfully"
+    "save_success": "Saved successfully",
+    "games_list": {
+      "title": "Game Library",
+      "subtitle": "Manage titles, assets, and metadata for the entire platform.",
+      "add_new": "Add New Game",
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "delete": "Delete",
+      "empty_desc": "Expand the platform's ecosystem\nby adding new competitive titles.",
+      "back_to_list": "Back to Library",
+      "edit_title": "Edit Title",
+      "edit_subtitle": "Update assets and metadata for {name}"
+    },
+    "game_form": {
+      "metadata_title": "Title Metadata",
+      "metadata_refine": "Refine Metadata",
+      "name_label": "Game Name",
+      "slug_label": "Slug (URL)",
+      "category_label": "Category",
+      "developer_label": "Developer",
+      "year_label": "Release Year",
+      "description_label": "Detailed Description",
+      "active_label": "Active Library Title",
+      "active_desc": "Available for selection in tournaments",
+      "logo_label": "Brand Logo",
+      "logo_desc": "Transparent PNG preferred",
+      "cover_label": "Cinematic Cover",
+      "cover_desc": "High-res landscape image",
+      "select_logo": "Upload Logo",
+      "select_cover": "Upload Cover",
+      "save_btn": "Save Changes",
+      "register_btn": "Register Title",
+      "cat_moba": "MOBA",
+      "cat_fps": "FPS",
+      "cat_sports": "Sports",
+      "cat_fighting": "Fighting",
+      "cat_rts": "RTS",
+      "cat_other": "Other"
+    }
   }
 }

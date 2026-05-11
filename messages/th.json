@@ -631,6 +631,45 @@
     "platform_icon": "ลิงก์ไอคอน",
     "platforms_subtitle": "กำหนดระบบนิเวศของอุปกรณ์ที่ใช้ในการแข่งขัน",
     "confirm_delete": "คุณแน่ใจหรือไม่ว่าต้องการลบสิ่งนี้?",
-    "save_success": "บันทึกข้อมูลสำเร็จ"
+    "save_success": "บันทึกข้อมูลสำเร็จ",
+    "games_list": {
+      "title": "คลังเกมหลัก",
+      "subtitle": "จัดการรายชื่อเกม สินทรัพย์ และข้อมูลพื้นฐานสำหรับทั้งแพลตฟอร์ม",
+      "add_new": "เพิ่มเกมใหม่",
+      "active": "เปิดใช้งาน",
+      "inactive": "ปิดใช้งาน",
+      "edit": "แก้ไข",
+      "delete": "ลบ",
+      "empty_desc": "ขยายระบบนิเวศของแพลตฟอร์ม\nโดยการเพิ่มเกมการแข่งขันใหม่ๆ",
+      "back_to_list": "กลับไปยังคลังเกม",
+      "edit_title": "แก้ไขข้อมูลเกม",
+      "edit_subtitle": "ปรับปรุงสินทรัพย์และข้อมูลเมตาสำหรับ {name}"
+    },
+    "game_form": {
+      "metadata_title": "ข้อมูลพื้นฐาน",
+      "metadata_refine": "ปรับปรุงข้อมูล",
+      "name_label": "ชื่อเกม",
+      "slug_label": "สลัก (URL)",
+      "category_label": "หมวดหมู่",
+      "developer_label": "ผู้พัฒนา",
+      "year_label": "ปีที่วางจำหน่าย",
+      "description_label": "รายละเอียดเชิงลึก",
+      "active_label": "สถานะการใช้งานในคลัง",
+      "active_desc": "เปิดให้เลือกใช้งานในทัวร์นาเมนต์ต่างๆ",
+      "logo_label": "โลโก้แบรนด์",
+      "logo_desc": "แนะนำไฟล์ PNG โปร่งใส",
+      "cover_label": "ภาพหน้าปก",
+      "cover_desc": "ภาพแนวนอนความละเอียดสูง",
+      "select_logo": "อัปโหลดโลโก้",
+      "select_cover": "อัปโหลดหน้าปก",
+      "save_btn": "บันทึกการเปลี่ยนแปลง",
+      "register_btn": "ลงทะเบียนเกมใหม่",
+      "cat_moba": "MOBA",
+      "cat_fps": "FPS",
+      "cat_sports": "กีฬา (Sports)",
+      "cat_fighting": "ต่อสู้ (Fighting)",
+      "cat_rts": "RTS",
+      "cat_other": "อื่นๆ"
+    }
   }
 }

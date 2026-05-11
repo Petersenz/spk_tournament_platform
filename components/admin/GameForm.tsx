@@ -28,6 +28,7 @@ import {
   Tags,
 } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { saveGameAction } from "@/app/[locale]/(admin)/admin/games/actions";
 
 interface Game {
@@ -49,6 +50,7 @@ interface GameFormProps {
 }
 
 export function GameForm({ initialData, id }: GameFormProps) {
+  const t = useTranslations("Admin.game_form");
   const router = useRouter();
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
@@ -128,14 +130,14 @@ export function GameForm({ initialData, id }: GameFormProps) {
               <Gamepad2 className="h-7 w-7" />
             </div>
             <h2 className="font-display text-3xl font-black uppercase tracking-tight text-white">
-              {isEdit ? "Refine Metadata" : "Title Metadata"}
+              {isEdit ? t("metadata_refine") : t("metadata_title")}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                Game Name
+                {t("name_label")}
               </Label>
               <Input
                 name="name"
@@ -146,7 +148,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                Slug (URL)
+                {t("slug_label")}
               </Label>
               <Input
                 name="slug"
@@ -160,7 +162,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary flex items-center gap-2">
-                <Tags className="h-3 w-3" /> Category
+                <Tags className="h-3 w-3" /> {t("category_label")}
               </Label>
               <Select
                 name="category"
@@ -170,18 +172,18 @@ export function GameForm({ initialData, id }: GameFormProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-bg-secondary border-white/10">
-                  <SelectItem value="moba">MOBA</SelectItem>
-                  <SelectItem value="fps">FPS</SelectItem>
-                  <SelectItem value="sports">Sports</SelectItem>
-                  <SelectItem value="fighting">Fighting</SelectItem>
-                  <SelectItem value="rts">RTS</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="moba">{t("cat_moba")}</SelectItem>
+                  <SelectItem value="fps">{t("cat_fps")}</SelectItem>
+                  <SelectItem value="sports">{t("cat_sports")}</SelectItem>
+                  <SelectItem value="fighting">{t("cat_fighting")}</SelectItem>
+                  <SelectItem value="rts">{t("cat_rts")}</SelectItem>
+                  <SelectItem value="other">{t("cat_other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary flex items-center gap-2">
-                <Building2 className="h-3 w-3" /> Developer
+                <Building2 className="h-3 w-3" /> {t("developer_label")}
               </Label>
               <Input
                 name="developer"
@@ -191,7 +193,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary flex items-center gap-2">
-                <Calendar className="h-3 w-3" /> Release Year
+                <Calendar className="h-3 w-3" /> {t("year_label")}
               </Label>
               <Input
                 name="release_year"
@@ -204,7 +206,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
 
           <div className="space-y-3">
             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-              Detailed Description
+              {t("description_label")}
             </Label>
             <Textarea
               name="description"
@@ -222,10 +224,10 @@ export function GameForm({ initialData, id }: GameFormProps) {
               </div>
               <div>
                 <div className="text-sm font-black text-white uppercase tracking-tight">
-                  Active Library Title
+                  {t("active_label")}
                 </div>
                 <div className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest">
-                  Available for selection in tournaments
+                  {t("active_desc")}
                 </div>
               </div>
             </div>
@@ -238,10 +240,10 @@ export function GameForm({ initialData, id }: GameFormProps) {
           <div className="bg-[#0c0c0e] border border-white/5 p-8 rounded-[2.5rem] shadow-xl space-y-6">
             <div className="space-y-1">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                Brand Logo
+                {t("logo_label")}
               </Label>
               <p className="text-[9px] text-text-tertiary font-medium uppercase tracking-widest">
-                Transparent PNG preferred
+                {t("logo_desc")}
               </p>
             </div>
             <div className="relative h-48 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center group hover:border-brand-primary transition-all cursor-pointer overflow-hidden">
@@ -272,7 +274,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
                 <div className="text-center space-y-3">
                   <Upload className="h-10 w-10 text-text-tertiary group-hover:text-brand-primary transition-all mx-auto" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-text-tertiary">
-                    Upload Logo
+                    {t("select_logo")}
                   </span>
                 </div>
               )}
@@ -288,10 +290,10 @@ export function GameForm({ initialData, id }: GameFormProps) {
           <div className="bg-[#0c0c0e] border border-white/5 p-8 rounded-[2.5rem] shadow-xl space-y-6">
             <div className="space-y-1">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                Cinematic Cover
+                {t("cover_label")}
               </Label>
               <p className="text-[9px] text-text-tertiary font-medium uppercase tracking-widest">
-                High-res landscape image
+                {t("cover_desc")}
               </p>
             </div>
             <div className="relative h-48 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center group hover:border-brand-primary transition-all cursor-pointer overflow-hidden">
@@ -322,7 +324,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
                 <div className="text-center space-y-3">
                   <Upload className="h-10 w-10 text-text-tertiary group-hover:text-brand-primary transition-all mx-auto" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-text-tertiary">
-                    Upload Cover
+                    {t("select_cover")}
                   </span>
                 </div>
               )}
@@ -346,11 +348,11 @@ export function GameForm({ initialData, id }: GameFormProps) {
               <div className="flex items-center gap-3">
                 {isEdit ? (
                   <>
-                    <Save className="h-6 w-6" /> Save Changes
+                    <Save className="h-6 w-6" /> {t("save_btn")}
                   </>
                 ) : (
                   <>
-                    <Rocket className="h-6 w-6" /> Register Title
+                    <Rocket className="h-6 w-6" /> {t("register_btn")}
                   </>
                 )}
               </div>

@@ -29,21 +29,24 @@ export default async function AdminGamesPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  const t = await getTranslations("Admin.games_list");
+  const tForm = await getTranslations("Admin.game_form");
+
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
-            Game Library
+            {t("title")}
           </h1>
           <p className="text-text-secondary mt-2 font-medium">
-            Manage titles, assets, and metadata for the entire platform.
+            {t("subtitle")}
           </p>
         </div>
         <Link href="/admin/games/new">
           <Button className="bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_30px_rgba(244,0,9,0.5)] transition-all font-black uppercase tracking-widest px-10 py-7 rounded-2xl text-base shadow-2xl">
-            <Plus className="mr-3 h-5 w-5" /> Add New Game
+            <Plus className="mr-3 h-5 w-5" /> {t("add_new")}
           </Button>
         </Link>
       </div>
@@ -76,11 +79,11 @@ export default async function AdminGamesPage() {
               <div className="absolute top-6 right-6 z-20">
                 {game.is_active ? (
                   <div className="flex items-center gap-2 bg-success/10 text-success border border-success/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
-                    <CheckCircle2 className="h-3 w-3" /> Active
+                    <CheckCircle2 className="h-3 w-3" /> {t("active")}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 bg-white/5 text-text-tertiary border border-white/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
-                    <XCircle className="h-3 w-3" /> Inactive
+                    <XCircle className="h-3 w-3" /> {t("inactive")}
                   </div>
                 )}
               </div>
@@ -122,14 +125,15 @@ export default async function AdminGamesPage() {
                     variant="outline"
                     className="w-full border-white/5 text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px] rounded-xl h-11 transition-all"
                   >
-                    <Edit2 className="mr-2 h-3 w-3 text-brand-primary" /> Edit
+                    <Edit2 className="mr-2 h-3 w-3 text-brand-primary" />{" "}
+                    {t("edit")}
                   </Button>
                 </Link>
                 <Button
                   variant="ghost"
                   className="w-full text-text-tertiary hover:text-error hover:bg-error/5 font-black uppercase tracking-widest text-[10px] rounded-xl h-11 transition-all"
                 >
-                  <Trash2 className="mr-2 h-3 w-3" /> Delete
+                  <Trash2 className="mr-2 h-3 w-3" /> {t("delete")}
                 </Button>
               </div>
             </div>
@@ -144,12 +148,10 @@ export default async function AdminGamesPage() {
             </div>
             <div className="text-center">
               <div className="font-display text-xl font-black text-white uppercase tracking-tight mb-2">
-                Register Game
+                {tForm("register_btn")}
               </div>
               <p className="text-xs text-text-tertiary font-bold uppercase tracking-widest leading-loose">
-                Expand the platform&apos;s ecosystem
-                <br />
-                by adding new competitive titles.
+                {t("empty_desc")}
               </p>
             </div>
           </div>
