@@ -484,6 +484,11 @@
     "about": "เกี่ยวกับเรา"
   },
   "Tournament": {
+    "all_rounds": "ทุกรอบ",
+    "pending_swap": "กำลังเตรียมสลับคู่แข่ง (รอบที่ 1)",
+    "swap_question": "ต้องการสลับตัวระหว่าง <team1></team1> กับ <team2></team2> หรือไม่?",
+    "confirm_swap": "ยืนยันการสลับ",
+    "cancel_swap": "ยกเลิก",
     "participants_table": "รายชื่อผู้เข้าแข่งขัน",
     "seq": "ลำดับ",
     "participant": "ผู้เข้าแข่งขัน",

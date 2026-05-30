@@ -250,7 +250,7 @@ export default async function PublicTournamentDetailPage({
                 </div>
               </div>
 
-              <div className="overflow-x-auto scrollbar-hide min-h-[500px] flex items-center justify-center bg-white/[0.01] rounded-[2rem] border border-white/5 border-dashed">
+              <div className="w-full bg-[#0c0c0e]/30 rounded-[2.5rem] border border-white/5 p-4 md:p-6 overflow-hidden">
                 <BracketView
                   initialMatches={matches || []}
                   tournamentId={id}

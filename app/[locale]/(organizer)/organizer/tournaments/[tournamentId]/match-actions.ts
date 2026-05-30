@@ -119,3 +119,56 @@ export async function updateMatchDetails(formData: FormData) {
 
   return { success: true };
 }
+
+export async function swapTeamsInMatches(
+  tournamentId: string,
+  matchId1: string,
+  participantField1: "participant1_id" | "participant2_id",
+  matchId2: string,
+  participantField2: "participant1_id" | "participant2_id",
+) {
+  const supabase = await createClient();
+
+  // 1. Fetch the two matches
+  const { data: match1, error: err1 } = await supabase
+    .from("matches")
+    .select("*")
+    .eq("id", matchId1)
+    .single();
+
+  const { data: match2, error: err2 } = await supabase
+    .from("matches")
+    .select("*")
+    .eq("id", matchId2)
+    .single();
+
+  if (err1 || err2 || !match1 || !match2) {
+    return { error: "One or both matches not found" };
+  }
+
+  // Get the participant IDs
+  const teamId1 = match1[participantField1];
+  const teamId2 = match2[participantField2];
+
+  if (!teamId1 || !teamId2) {
+    return { error: "Both slots must have confirmed teams to swap" };
+  }
+
+  // 2. Perform swap in database
+  const { error: updateErr1 } = await supabase
+    .from("matches")
+    .update({ [participantField1]: teamId2 })
+    .eq("id", matchId1);
+
+  const { error: updateErr2 } = await supabase
+    .from("matches")
+    .update({ [participantField2]: teamId1 })
+    .eq("id", matchId2);
+
+  if (updateErr1 || updateErr2) {
+    return { error: "Failed to update match slots" };
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}`);
+  return { success: true };
+}

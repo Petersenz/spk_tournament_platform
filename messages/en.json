@@ -481,6 +481,11 @@
     "about": "About Us"
   },
   "Tournament": {
+    "all_rounds": "All Rounds",
+    "pending_swap": "Pending Match Swap (Round 1)",
+    "swap_question": "Swap <team1></team1> with <team2></team2>?",
+    "confirm_swap": "Confirm Swap",
+    "cancel_swap": "Cancel",
     "participants_table": "Participants Roster",
     "seq": "No.",
     "participant": "Competitor",

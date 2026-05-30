@@ -68,7 +68,7 @@ export default async function TournamentDashboardPage({
   const { data: matches } = await supabase
     .from("matches")
     .select(
-      "*, p1:participants!participant1_id(name), p2:participants!participant2_id(name), rounds(number, name)",
+      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name)",
     )
     .eq("stage_id", currentStage?.id || "")
     .order("match_number", { ascending: true });
@@ -434,36 +434,34 @@ export default async function TournamentDashboardPage({
         </div>
 
         {/* REALTIME BRACKET VISUALIZATION */}
-        <div className="relative w-full overflow-x-auto pb-10 scrollbar-hide">
-          <div className="min-w-[1000px]">
-            {currentStage && matches?.length ? (
-              <BracketView
-                initialMatches={matches || []}
-                tournamentId={tournamentId}
-                isOrganizer={true}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-40 text-center border border-white/5 bg-white/2 rounded-[3rem] backdrop-blur-sm border-dashed">
-                <Swords className="h-20 w-20 text-white/5 mb-8" />
-                <h3 className="font-display text-2xl font-black uppercase tracking-tight text-white mb-3">
-                  {currentStage ? t("no_matches") : t("not_configured")}
-                </h3>
-                <p className="text-text-tertiary max-w-sm font-medium leading-relaxed mb-10">
-                  {currentStage ? t("init_bracket_desc") : t("setup_required")}
-                </p>
-                {currentStage && (
-                  <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-[0.3em] text-text-tertiary">
-                    <span className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-brand-primary" />{" "}
-                      {t("manage_entries")} ({participantCount || 0})
-                    </span>
-                    <span className="h-1 w-1 bg-white/20 rounded-full"></span>
-                    <span>{t("min_required", { count: 2 })}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        <div className="relative w-full overflow-hidden">
+          {currentStage && matches?.length ? (
+            <BracketView
+              initialMatches={matches || []}
+              tournamentId={tournamentId}
+              isOrganizer={true}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-40 text-center border border-white/5 bg-white/2 rounded-[3rem] backdrop-blur-sm border-dashed">
+              <Swords className="h-20 w-20 text-white/5 mb-8" />
+              <h3 className="font-display text-2xl font-black uppercase tracking-tight text-white mb-3">
+                {currentStage ? t("no_matches") : t("not_configured")}
+              </h3>
+              <p className="text-text-tertiary max-w-sm font-medium leading-relaxed mb-10">
+                {currentStage ? t("init_bracket_desc") : t("setup_required")}
+              </p>
+              {currentStage && (
+                <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-[0.3em] text-text-tertiary">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-brand-primary" />{" "}
+                    {t("manage_entries")} ({participantCount || 0})
+                  </span>
+                  <span className="h-1 w-1 bg-white/20 rounded-full"></span>
+                  <span>{t("min_required", { count: 2 })}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
