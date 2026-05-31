@@ -129,7 +129,8 @@
       "tournaments_subtitle": "Manage and track all competitions across your projects.",
       "empty_tournaments_desc": "Create your first tournament inside a project to start competing.",
       "create_new": "Create New",
-      "go_to_projects": "Go to Projects"
+      "go_to_projects": "Go to Projects",
+      "admin_dashboard": "Admin Dashboard"
     },
     "projects": {
       "title": "Your Projects",
@@ -673,6 +674,18 @@
     "users": "User Management",
     "platforms": "Platforms",
     "settings": "System Settings",
+    "layout": {
+      "admin": "Admin",
+      "control_panel": "Control Panel",
+      "overview": "Overview",
+      "games": "Game Library",
+      "users": "User Management",
+      "platforms": "Platforms",
+      "settings": "System Settings",
+      "super_admin": "Super Admin",
+      "mobile_title": "Admin CP",
+      "menu": "Menu"
+    },
     "dashboard_page": {
       "badge": "Live Telemetry",
       "title": "System Overview",
@@ -716,6 +729,150 @@
           "description": "Update site content, branding, navigation, and modules."
         }
       }
+    },
+    "settings_page": {
+      "title": "System Settings",
+      "subtitle": "Manage public branding, content, navigation, and platform modules.",
+      "cms_warning": {
+        "title": "CMS Database Setup Required",
+        "description": "Run the latest Supabase CMS migration before publishing content, navigation, module toggles, or logo uploads. Public pages are still using production fallbacks."
+      },
+      "brand": {
+        "title": "Brand Settings",
+        "site_name_en": "Site Name (EN)",
+        "site_name_th": "Site Name (TH)",
+        "tagline_en": "Tagline (EN)",
+        "tagline_th": "Tagline (TH)",
+        "footer_text_en": "Footer Text (EN)",
+        "footer_text_th": "Footer Text (TH)",
+        "contact_email": "Contact Email",
+        "facebook_url": "Facebook URL",
+        "discord_url": "Discord URL"
+      },
+      "logo": {
+        "title": "Site Logo",
+        "description": "Upload a new logo here. The saved image is used in the public navbar, admin sidebar, organizer sidebar, and browser metadata.",
+        "upload": "Upload Site Logo",
+        "auto_save": "Logo changes are saved automatically after upload.",
+        "saving": "Saving logo",
+        "success": "Site logo updated",
+        "error": "Failed to save site logo",
+        "preview_title": "Live Preview",
+        "preview_description": "This is how the mark appears in compact navigation areas.",
+        "navbar_preview": "Navbar",
+        "navbar_preview_desc": "Public + dashboard",
+        "icon_preview": "Icon Scale",
+        "icon_preview_desc": "Check readability",
+        "preview_alt": "Site logo preview",
+        "small_preview_alt": "Small logo preview"
+      },
+      "public_content": {
+        "title": "Public Content",
+        "description": "Controlled copy blocks with safe fallbacks.",
+        "locale_note": "English and Thai content are edited together."
+      },
+      "content_labels": {
+        "home_hero": "Home Hero",
+        "about_intro": "About Intro",
+        "partner_cta": "Partner CTA"
+      },
+      "locale": {
+        "en": "English",
+        "th": "Thai"
+      },
+      "fields": {
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "cta_label": "CTA Label",
+        "cta_link": "CTA Link"
+      },
+      "navigation": {
+        "title": "Navigation",
+        "description": "Edit labels and visibility. Routes stay locked for safety.",
+        "public_navbar": "Public Navbar",
+        "footer": "Footer",
+        "english_label": "English label",
+        "thai_label": "Thai label"
+      },
+      "modules": {
+        "title": "Module Toggles",
+        "description": "These toggles hide public UI and block critical public actions."
+      },
+      "features": {
+        "games": {
+          "title": "Games",
+          "description": "Show games pages and related public navigation."
+        },
+        "tournaments": {
+          "title": "Tournaments",
+          "description": "Show public tournament browse/detail pages."
+        },
+        "about": {
+          "title": "About",
+          "description": "Show the public About page and navigation link."
+        },
+        "public_registration": {
+          "title": "Public Registration",
+          "description": "Allow account signups and public tournament joins."
+        },
+        "maintenance": {
+          "title": "Maintenance Mode",
+          "description": "Show a clean maintenance screen to non-admin visitors."
+        }
+      },
+      "publish": {
+        "title": "Publish Changes",
+        "description": "Brand, content, navigation, and module changes are applied to public pages after saving. Missing CMS values continue to use production fallbacks.",
+        "warning": "Module toggles do not change organizer tournament data, bracket records, participants, matches, or registrations.",
+        "saving": "Publishing Changes",
+        "save": "Save Changes"
+      }
+    },
+    "users_page": {
+      "title": "User Management",
+      "subtitle": "Monitor and manage all platform participants and organizers.",
+      "search_placeholder": "Search nickname or email...",
+      "table": {
+        "profile": "Profile",
+        "role": "Role",
+        "joined": "Joined Date",
+        "action": "Action"
+      },
+      "roles": {
+        "admin": "Admin",
+        "organizer": "Organizer",
+        "player": "Player"
+      }
+    },
+    "manage_user": {
+      "manage": "Manage",
+      "title": "Manage User",
+      "cancel": "Cancel",
+      "saving": "Saving",
+      "save_role": "Save Role",
+      "role_updated": "User role updated",
+      "user_deleted": "User deleted",
+      "user_id": "User ID",
+      "joined": "Joined",
+      "unknown": "Unknown",
+      "platform_role": "Platform Role",
+      "roles": {
+        "admin": "Admin",
+        "organizer": "Organizer",
+        "player": "Player"
+      },
+      "role_descriptions": {
+        "admin": "Full admin access to system settings, games, users, and platform controls.",
+        "organizer": "Can create projects, tournaments, participants, and manage matches.",
+        "player": "Can browse tournaments, register, and manage their player profile."
+      },
+      "self_warning": "You are editing your own account. Removing your own admin role is blocked.",
+      "danger_title": "Danger Zone",
+      "danger_description": "Delete is only allowed when this user has no linked projects, tournaments, registrations, participants, match reports, or CMS updates. This removes the Supabase Auth user and cannot be undone.",
+      "delete_placeholder": "Type DELETE to confirm",
+      "keep_user": "Keep User",
+      "deleting": "Deleting",
+      "delete_user": "Delete User"
     },
     "add_platform": "Add Platform",
     "edit_platform": "Edit Platform",

@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 
 interface SettingsSubmitButtonProps {
   disabled?: boolean;
+  labels: {
+    saving: string;
+    save: string;
+  };
 }
 
 export function SettingsSubmitButton({
   disabled = false,
+  labels,
 }: SettingsSubmitButtonProps) {
   const { pending } = useFormStatus();
   const isDisabled = disabled || pending;
@@ -23,12 +28,12 @@ export function SettingsSubmitButton({
       {pending ? (
         <>
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Publishing Changes
+          {labels.saving}
         </>
       ) : (
         <>
           <Save className="mr-2 h-5 w-5" />
-          Save Changes
+          {labels.save}
         </>
       )}
     </Button>

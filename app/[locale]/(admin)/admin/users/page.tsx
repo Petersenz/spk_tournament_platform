@@ -25,6 +25,7 @@ export async function generateMetadata({
 }
 
 export default async function AdminUsersPage() {
+  const t = await getTranslations("Admin.users_page");
   const supabase = await createClient();
   const {
     data: { user },
@@ -40,17 +41,17 @@ export default async function AdminUsersPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
-            User Directory
+            {t("title")}
           </h1>
           <p className="text-text-secondary mt-2 font-medium">
-            Monitor and manage all platform participants and organizers.
+            {t("subtitle")}
           </p>
         </div>
         <div className="relative w-full md:w-96">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-text-tertiary" />
           <Input
             className="bg-white/5 border-white/5 pl-14 h-16 rounded-2xl text-white font-bold uppercase tracking-widest text-xs focus:border-brand-primary transition-all shadow-2xl"
-            placeholder="Search nickname or email..."
+            placeholder={t("search_placeholder")}
           />
         </div>
       </div>
@@ -58,10 +59,10 @@ export default async function AdminUsersPage() {
       {/* USERS LIST */}
       <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
         <div className="p-6 bg-white/2 border-b border-white/5 grid grid-cols-4 text-[10px] font-black uppercase tracking-widest text-text-tertiary px-10">
-          <span>Profile</span>
-          <span>Role</span>
-          <span>Joined Date</span>
-          <span className="text-right">Action</span>
+          <span>{t("table.profile")}</span>
+          <span>{t("table.role")}</span>
+          <span>{t("table.joined")}</span>
+          <span className="text-right">{t("table.action")}</span>
         </div>
         <div className="divide-y divide-white/5">
           {profiles?.map((profile) => (
@@ -98,7 +99,7 @@ export default async function AdminUsersPage() {
                   ) : profile.role === "organizer" ? (
                     <Shield className="h-3 w-3" />
                   ) : null}
-                  {profile.role}
+                  {t(`roles.${normalizeRole(profile.role)}`)}
                 </span>
               </div>
 

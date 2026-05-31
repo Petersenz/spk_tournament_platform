@@ -57,6 +57,7 @@ export async function generateMetadata({
 }
 
 export default async function AdminSettingsPage() {
+  const t = await getTranslations("Admin.settings_page");
   const supabase = await createClient();
 
   // Fetch settings from DB
@@ -230,33 +231,33 @@ export default async function AdminSettingsPage() {
       (item) => item.placement === placement && item.key === key,
     );
   const contentLabels: Record<ContentBlockKey, string> = {
-    home_hero: "Home Hero",
-    about_intro: "About Intro",
-    partner_cta: "Partner CTA",
+    home_hero: t("content_labels.home_hero"),
+    about_intro: t("content_labels.about_intro"),
+    partner_cta: t("content_labels.partner_cta"),
   };
   const featureLabels: Record<
     FeatureFlagKey,
     { title: string; description: string }
   > = {
     module_games_enabled: {
-      title: "Games",
-      description: "Show games pages and related public navigation.",
+      title: t("features.games.title"),
+      description: t("features.games.description"),
     },
     module_tournaments_enabled: {
-      title: "Tournaments",
-      description: "Show public tournament browse/detail pages.",
+      title: t("features.tournaments.title"),
+      description: t("features.tournaments.description"),
     },
     module_about_enabled: {
-      title: "About",
-      description: "Show the public About page and navigation link.",
+      title: t("features.about.title"),
+      description: t("features.about.description"),
     },
     module_public_registration_enabled: {
-      title: "Public Registration",
-      description: "Allow account signups and public tournament joins.",
+      title: t("features.public_registration.title"),
+      description: t("features.public_registration.description"),
     },
     maintenance_mode: {
-      title: "Maintenance Mode",
-      description: "Show a clean maintenance screen to non-admin visitors.",
+      title: t("features.maintenance.title"),
+      description: t("features.maintenance.description"),
     },
   };
 
@@ -264,22 +265,18 @@ export default async function AdminSettingsPage() {
     <div className="space-y-12 animate-in fade-in duration-700">
       <div>
         <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
-          System Config
+          {t("title")}
         </h1>
-        <p className="text-text-secondary mt-2 font-medium">
-          Global platform parameters and configurations.
-        </p>
+        <p className="text-text-secondary mt-2 font-medium">{t("subtitle")}</p>
       </div>
 
       {!cmsSchemaReady && (
         <div className="rounded-[2rem] border border-warning/30 bg-warning/10 p-6 text-warning">
           <div className="font-display text-lg font-black uppercase tracking-tight">
-            CMS Database Setup Required
+            {t("cms_warning.title")}
           </div>
           <p className="mt-2 text-xs font-bold uppercase tracking-widest leading-relaxed text-warning/80">
-            Run the latest Supabase CMS migration before publishing content,
-            navigation, module toggles, or logo uploads. Public pages are still
-            using production fallbacks.
+            {t("cms_warning.description")}
           </p>
         </div>
       )}
@@ -301,12 +298,31 @@ export default async function AdminSettingsPage() {
               <Globe className="h-5 w-5" />
             </div>
             <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-              Brand Settings
+              {t("brand.title")}
             </h2>
           </div>
 
           <div className="space-y-6 relative z-10">
-            <SiteLogoUploadField initialValue={siteLogoUrl} />
+            <SiteLogoUploadField
+              initialValue={siteLogoUrl}
+              labels={{
+                title: t("logo.title"),
+                description: t("logo.description"),
+                upload: t("logo.upload"),
+                autoSave: t("logo.auto_save"),
+                saving: t("logo.saving"),
+                success: t("logo.success"),
+                error: t("logo.error"),
+                previewTitle: t("logo.preview_title"),
+                previewDescription: t("logo.preview_description"),
+                navbarPreview: t("logo.navbar_preview"),
+                navbarPreviewDescription: t("logo.navbar_preview_desc"),
+                iconPreview: t("logo.icon_preview"),
+                iconPreviewDescription: t("logo.icon_preview_desc"),
+                previewAlt: t("logo.preview_alt"),
+                smallPreviewAlt: t("logo.small_preview_alt"),
+              }}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
@@ -314,7 +330,7 @@ export default async function AdminSettingsPage() {
                   htmlFor="site_name_en"
                   className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
                 >
-                  Site Name (EN)
+                  {t("brand.site_name_en")}
                 </Label>
                 <Input
                   key={`site-name-en-${siteNameEn}`}
@@ -331,7 +347,7 @@ export default async function AdminSettingsPage() {
                   htmlFor="site_name_th"
                   className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
                 >
-                  Site Name (TH)
+                  {t("brand.site_name_th")}
                 </Label>
                 <Input
                   key={`site-name-th-${siteNameTh}`}
@@ -349,7 +365,7 @@ export default async function AdminSettingsPage() {
                 htmlFor="site_tagline_en"
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
               >
-                Tagline (EN)
+                {t("brand.tagline_en")}
               </Label>
               <Input
                 key={`site-tagline-en-${siteTaglineEn}`}
@@ -366,7 +382,7 @@ export default async function AdminSettingsPage() {
                 htmlFor="site_tagline_th"
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
               >
-                Tagline (TH)
+                {t("brand.tagline_th")}
               </Label>
               <Input
                 key={`site-tagline-th-${siteTaglineTh}`}
@@ -383,7 +399,7 @@ export default async function AdminSettingsPage() {
                 htmlFor="footer_text_en"
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
               >
-                Footer Text (EN)
+                {t("brand.footer_text_en")}
               </Label>
               <Input
                 key={`footer-text-en-${footerTextEn}`}
@@ -400,7 +416,7 @@ export default async function AdminSettingsPage() {
                 htmlFor="footer_text_th"
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
               >
-                Footer Text (TH)
+                {t("brand.footer_text_th")}
               </Label>
               <Input
                 key={`footer-text-th-${footerTextTh}`}
@@ -418,7 +434,7 @@ export default async function AdminSettingsPage() {
                   htmlFor="contact_email"
                   className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
                 >
-                  Contact Email
+                  {t("brand.contact_email")}
                 </Label>
                 <Input
                   key={`contact-email-${contactEmail}`}
@@ -433,7 +449,7 @@ export default async function AdminSettingsPage() {
                   htmlFor="facebook_url"
                   className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
                 >
-                  Facebook URL
+                  {t("brand.facebook_url")}
                 </Label>
                 <Input
                   key={`facebook-url-${facebookUrl}`}
@@ -448,7 +464,7 @@ export default async function AdminSettingsPage() {
                   htmlFor="discord_url"
                   className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary"
                 >
-                  Discord URL
+                  {t("brand.discord_url")}
                 </Label>
                 <Input
                   key={`discord-url-${discordUrl}`}
@@ -473,10 +489,10 @@ export default async function AdminSettingsPage() {
             </div>
             <div>
               <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-                Public Content
+                {t("public_content.title")}
               </h2>
               <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary mt-1">
-                Controlled copy blocks with safe fallbacks.
+                {t("public_content.description")}
               </p>
             </div>
           </div>
@@ -493,7 +509,7 @@ export default async function AdminSettingsPage() {
                       {contentLabels[blockKey]}
                     </h3>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary mt-1">
-                      English and Thai content are edited together.
+                      {t("public_content.locale_note")}
                     </p>
                   </div>
                   {CONTENT_LOCALES.map((locale) => (
@@ -510,12 +526,12 @@ export default async function AdminSettingsPage() {
                   {CONTENT_LOCALES.map((locale) => (
                     <div key={`${blockKey}-${locale}`} className="space-y-4">
                       <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">
-                        {locale === "en" ? "English" : "Thai"}
+                        {locale === "en" ? t("locale.en") : t("locale.th")}
                       </div>
 
                       <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                          Title
+                          {t("fields.title")}
                         </Label>
                         <Textarea
                           name={`content_${blockKey}_${locale}_title`}
@@ -531,7 +547,7 @@ export default async function AdminSettingsPage() {
 
                       <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                          Subtitle
+                          {t("fields.subtitle")}
                         </Label>
                         <Textarea
                           name={`content_${blockKey}_${locale}_subtitle`}
@@ -561,7 +577,7 @@ export default async function AdminSettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-3">
                             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                              CTA Label
+                              {t("fields.cta_label")}
                             </Label>
                             <Input
                               name={`content_${blockKey}_${locale}_cta_label`}
@@ -575,7 +591,7 @@ export default async function AdminSettingsPage() {
                           </div>
                           <div className="space-y-3">
                             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary">
-                              CTA Link
+                              {t("fields.cta_link")}
                             </Label>
                             <Input
                               name={`content_${blockKey}_${locale}_cta_href`}
@@ -605,10 +621,10 @@ export default async function AdminSettingsPage() {
             </div>
             <div>
               <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-                Navigation
+                {t("navigation.title")}
               </h2>
               <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary mt-1">
-                Edit labels and visibility. Routes stay locked for safety.
+                {t("navigation.description")}
               </p>
             </div>
           </div>
@@ -620,7 +636,9 @@ export default async function AdminSettingsPage() {
                 className="rounded-[2rem] border border-white/5 bg-white/[0.02] p-6 space-y-5"
               >
                 <h3 className="font-display text-lg font-black uppercase tracking-tight text-white">
-                  {placement === "public_navbar" ? "Public Navbar" : "Footer"}
+                  {placement === "public_navbar"
+                    ? t("navigation.public_navbar")
+                    : t("navigation.footer")}
                 </h3>
 
                 {PUBLIC_NAVIGATION_DEFINITIONS.map((item) => {
@@ -653,13 +671,13 @@ export default async function AdminSettingsPage() {
                           name={`nav_${placement}_${item.key}_label_en`}
                           defaultValue={row?.label_en || item.labelEn}
                           className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-bold"
-                          aria-label={`${item.labelEn} English label`}
+                          aria-label={`${item.labelEn} ${t("navigation.english_label")}`}
                         />
                         <Input
                           name={`nav_${placement}_${item.key}_label_th`}
                           defaultValue={row?.label_th || item.labelTh}
                           className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-bold"
-                          aria-label={`${item.labelEn} Thai label`}
+                          aria-label={`${item.labelEn} ${t("navigation.thai_label")}`}
                         />
                       </div>
                     </div>
@@ -678,10 +696,10 @@ export default async function AdminSettingsPage() {
             </div>
             <div>
               <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-                Module Toggles
+                {t("modules.title")}
               </h2>
               <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary mt-1">
-                These toggles hide public UI and block critical public actions.
+                {t("modules.description")}
               </p>
             </div>
           </div>
@@ -718,23 +736,23 @@ export default async function AdminSettingsPage() {
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-                Publish Changes
+                {t("publish.title")}
               </h2>
             </div>
             <div className="space-y-6">
               <p className="text-xs font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
-                Brand, content, navigation, and module changes are applied to
-                public pages after saving. Missing CMS values continue to use
-                production fallbacks.
+                {t("publish.description")}
               </p>
               <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest leading-relaxed">
-                Module toggles do not change organizer tournament data, bracket
-                records, participants, matches, or registrations.
+                {t("publish.warning")}
               </p>
             </div>
           </div>
 
-          <SettingsSubmitButton disabled={!cmsSchemaReady} />
+          <SettingsSubmitButton
+            disabled={!cmsSchemaReady}
+            labels={{ saving: t("publish.saving"), save: t("publish.save") }}
+          />
         </div>
       </form>
     </div>

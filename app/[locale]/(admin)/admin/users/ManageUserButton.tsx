@@ -11,6 +11,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PremiumModal } from "@/components/ui/PremiumModal";
@@ -35,15 +36,8 @@ interface ManageUserButtonProps {
   isSelf: boolean;
 }
 
-const roleDescriptions: Record<UserRole, string> = {
-  admin:
-    "Full admin access to system settings, games, users, and platform controls.",
-  organizer:
-    "Can create projects, tournaments, participants, and manage matches.",
-  player: "Can browse tournaments, register, and manage their player profile.",
-};
-
 export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
+  const t = useTranslations("Admin.manage_user");
   const [isOpen, setIsOpen] = useState(false);
   const [role, setRole] = useState<UserRole>(profile.role);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -74,7 +68,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
         return;
       }
 
-      toast.success("User role updated");
+      toast.success(t("role_updated"));
       resetModalState();
     });
   }
@@ -90,7 +84,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
         return;
       }
 
-      toast.success("User deleted");
+      toast.success(t("user_deleted"));
       resetModalState();
     });
   }
@@ -104,7 +98,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
         className="text-[10px] font-black uppercase tracking-widest text-text-tertiary hover:text-brand-primary transition-colors"
       >
         <UserCog className="mr-2 h-3.5 w-3.5" />
-        Manage
+        {t("manage")}
       </Button>
 
       <PremiumModal
@@ -114,7 +108,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
             resetModalState();
           }
         }}
-        title="Manage User"
+        title={t("title")}
         description={profile.nickname || profile.id.slice(0, 8)}
         size="lg"
         footer={
@@ -126,7 +120,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
               onClick={resetModalState}
               className="h-12 rounded-xl font-black uppercase tracking-widest text-text-tertiary hover:text-white"
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -137,10 +131,10 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
               {isPending && pendingAction === "role" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving
+                  {t("saving")}
                 </>
               ) : (
-                "Save Role"
+                t("save_role")
               )}
             </Button>
           </div>
@@ -151,7 +145,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
             <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
               <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
                 <Fingerprint className="h-3.5 w-3.5" />
-                User ID
+                {t("user_id")}
               </div>
               <p className="break-all text-sm font-bold text-white">
                 {profile.id}
@@ -160,12 +154,12 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
             <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
               <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
                 <Calendar className="h-3.5 w-3.5" />
-                Joined
+                {t("joined")}
               </div>
               <p className="text-sm font-bold text-white">
                 {profile.created_at
                   ? new Date(profile.created_at).toLocaleDateString()
-                  : "Unknown"}
+                  : t("unknown")}
               </p>
             </div>
           </div>
@@ -173,7 +167,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Platform Role
+              {t("platform_role")}
             </div>
             <Select
               value={role}
@@ -183,18 +177,19 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="z-[100010] border-white/10 bg-bg-secondary text-white">
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="organizer">Organizer</SelectItem>
-                <SelectItem value="player">Player</SelectItem>
+                <SelectItem value="admin">{t("roles.admin")}</SelectItem>
+                <SelectItem value="organizer">
+                  {t("roles.organizer")}
+                </SelectItem>
+                <SelectItem value="player">{t("roles.player")}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs font-semibold leading-relaxed text-text-secondary">
-              {roleDescriptions[role]}
+              {t(`role_descriptions.${role}`)}
             </p>
             {isSelf && (
               <p className="rounded-xl border border-warning/20 bg-warning/10 p-3 text-[10px] font-black uppercase tracking-widest text-warning">
-                You are editing your own account. Removing your own admin role
-                is blocked.
+                {t("self_warning")}
               </p>
             )}
           </div>
@@ -202,12 +197,10 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
           <div className="rounded-2xl border border-error/20 bg-error/10 p-5">
             <div className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-tight text-error">
               <AlertTriangle className="h-4 w-4" />
-              Danger Zone
+              {t("danger_title")}
             </div>
             <p className="text-xs font-semibold leading-relaxed text-text-secondary">
-              Delete is only allowed when this user has no linked projects,
-              tournaments, registrations, participants, match reports, or CMS
-              updates. This removes the Supabase Auth user and cannot be undone.
+              {t("danger_description")}
             </p>
 
             {confirmDelete ? (
@@ -215,7 +208,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
                 <Input
                   value={deleteText}
                   onChange={(event) => setDeleteText(event.target.value)}
-                  placeholder="Type DELETE to confirm"
+                  placeholder={t("delete_placeholder")}
                   disabled={isPending || isSelf}
                   className="h-12 rounded-xl border-error/20 bg-black/20 text-white"
                 />
@@ -230,7 +223,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
                     }}
                     className="h-11 rounded-xl font-black uppercase tracking-widest text-text-tertiary hover:text-white"
                   >
-                    Keep User
+                    {t("keep_user")}
                   </Button>
                   <Button
                     type="button"
@@ -241,12 +234,12 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
                     {isPending && pendingAction === "delete" ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting
+                        {t("deleting")}
                       </>
                     ) : (
                       <>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete User
+                        {t("delete_user")}
                       </>
                     )}
                   </Button>
@@ -261,7 +254,7 @@ export function ManageUserButton({ profile, isSelf }: ManageUserButtonProps) {
                 className="mt-5 h-11 rounded-xl border border-error/20 bg-error/10 text-error font-black uppercase tracking-widest hover:bg-error hover:text-white disabled:pointer-events-none disabled:opacity-50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete User
+                {t("delete_user")}
               </Button>
             )}
           </div>

@@ -85,16 +85,18 @@ export async function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-4">
-              {role === "admin" && (
-                <div className="hidden lg:flex items-center gap-2">
-                  <Link href="/admin/dashboard">
-                    <Button
-                      variant="outline"
-                      className="font-display border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest text-xs px-4 h-10 border-2"
-                    >
-                      <ShieldCheck className="mr-2 h-4 w-4" /> {t("admin_cp")}
-                    </Button>
-                  </Link>
+              {(role === "admin" || role === "organizer") && (
+                <div className="hidden md:flex items-center gap-2">
+                  {role === "admin" && (
+                    <Link href="/admin/dashboard">
+                      <Button
+                        variant="outline"
+                        className="font-display border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest text-xs px-4 h-10 border-2"
+                      >
+                        <ShieldCheck className="mr-2 h-4 w-4" /> {t("admin_cp")}
+                      </Button>
+                    </Link>
+                  )}
                   <Link href="/organizer/dashboard">
                     <Button
                       variant="outline"
