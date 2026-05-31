@@ -60,6 +60,29 @@ export default async function TournamentParticipantsPage({
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
+  const { data: matches } = await supabase
+    .from("matches")
+    .select(
+      "id, status, participant1_id, participant2_id, winner_id, score_participant1, score_participant2, stages!inner(tournament_id)",
+    )
+    .eq("stages.tournament_id", tournamentId);
+
+  const hasGeneratedMatches = !!matches?.length;
+  const hasCompletedMatches =
+    matches?.some((match) => {
+      const score1 = match.score_participant1 ?? 0;
+      const score2 = match.score_participant2 ?? 0;
+      const hasOneParticipant =
+        !!match.participant1_id !== !!match.participant2_id;
+      const isAutomaticBye =
+        match.status === "completed" &&
+        hasOneParticipant &&
+        !!match.winner_id &&
+        score1 + score2 <= 1;
+
+      return match.status === "completed" && !isAutomaticBye;
+    }) || false;
+
   const pendingCount = registrations?.length || 0;
   const approvedCount = participants?.length || 0;
 
@@ -181,6 +204,8 @@ export default async function TournamentParticipantsPage({
               tournamentId={tournamentId}
               tournamentSize={tournament.size}
               teamMaxPlayers={tournament.team_max_players || 5}
+              hasGeneratedMatches={hasGeneratedMatches}
+              hasCompletedMatches={hasCompletedMatches}
             />
           </div>
         </TabsContent>

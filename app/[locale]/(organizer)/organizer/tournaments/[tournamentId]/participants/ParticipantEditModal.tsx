@@ -33,6 +33,18 @@ import { Player, Participant } from "./types";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 
+function parseOptionalNumber(value: string): number | null {
+  if (!value.trim()) return null;
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function formatOptionalNumber(value: number | null | undefined): string {
+  return typeof value === "number" && !Number.isNaN(value)
+    ? value.toString()
+    : "";
+}
+
 export function ParticipantEditModal({
   participant,
   tournamentId,
@@ -112,9 +124,9 @@ export function ParticipantEditModal({
     const participantData = {
       ...participantInfo,
       seed:
-        participantInfo.seed === ""
-          ? null
-          : parseInt(participantInfo.seed as string),
+        typeof participantInfo.seed === "number"
+          ? participantInfo.seed
+          : parseOptionalNumber(participantInfo.seed),
     };
 
     // Filter out empty players (except those that already exist in DB)
@@ -384,12 +396,12 @@ export function ParticipantEditModal({
                         </Label>
                         <Input
                           type="number"
-                          value={player.position ?? ""}
+                          value={formatOptionalNumber(player.position)}
                           onChange={(e) =>
                             handlePlayerChange(
                               index,
                               "position",
-                              parseInt(e.target.value),
+                              parseOptionalNumber(e.target.value),
                             )
                           }
                           className="bg-white/[0.03] border-white/10 h-14 rounded-2xl text-base font-bold px-6"

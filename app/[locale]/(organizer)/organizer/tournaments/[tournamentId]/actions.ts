@@ -69,6 +69,176 @@ export async function generateBracket(
   }
 }
 
+interface ProjectOwnerRow {
+  owner_id: string | null;
+}
+
+interface TournamentAccessRow {
+  id: string;
+  status: string | null;
+  projects: ProjectOwnerRow | ProjectOwnerRow[] | null;
+}
+
+interface ClearableMatchRow {
+  id: string;
+  status: string | null;
+  participant1_id: string | null;
+  participant2_id: string | null;
+  winner_id: string | null;
+  score_participant1: number | null;
+  score_participant2: number | null;
+}
+
+function getProjectOwnerId(
+  project: ProjectOwnerRow | ProjectOwnerRow[] | null,
+): string | null {
+  if (!project) return null;
+  return Array.isArray(project)
+    ? (project[0]?.owner_id ?? null)
+    : project.owner_id;
+}
+
+export async function clearBracket(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient();
+  const tournamentId = formData.get("tournament_id") as string;
+  const stageId = formData.get("stage_id") as string;
+
+  if (!tournamentId || !stageId) {
+    return { error: "Tournament and stage are required" };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: stage, error: stageError } = await supabase
+    .from("stages")
+    .select("id, tournament_id")
+    .eq("id", stageId)
+    .eq("tournament_id", tournamentId)
+    .single();
+
+  if (stageError || !stage) {
+    return { error: "Tournament stage not found" };
+  }
+
+  const { data: tournament, error: tournamentError } = await supabase
+    .from("tournaments")
+    .select("id, status, projects(owner_id)")
+    .eq("id", tournamentId)
+    .single();
+
+  if (tournamentError || !tournament) {
+    return { error: "Tournament not found" };
+  }
+
+  const tournamentRow = tournament as TournamentAccessRow;
+  const isOwner = getProjectOwnerId(tournamentRow.projects) === user.id;
+
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return { error: "Unauthorized: Not owner or admin" };
+    }
+  }
+
+  const { data: stageMatches, error: stageMatchesError } = await supabase
+    .from("matches")
+    .select(
+      "id, status, participant1_id, participant2_id, winner_id, score_participant1, score_participant2",
+    )
+    .eq("stage_id", stageId);
+
+  if (stageMatchesError) return { error: stageMatchesError.message };
+
+  const t = await getTranslations("Tournament");
+  const clearableStatuses = new Set(["pending", "ready"]);
+  const hasProtectedMatchResult = (stageMatches || []).some(
+    (match: ClearableMatchRow) => {
+      const score1 = match.score_participant1 ?? 0;
+      const score2 = match.score_participant2 ?? 0;
+      const hasOneParticipant =
+        !!match.participant1_id !== !!match.participant2_id;
+      const isAutomaticBye =
+        match.status === "completed" &&
+        hasOneParticipant &&
+        !!match.winner_id &&
+        score1 + score2 <= 1;
+
+      if (isAutomaticBye) return false;
+      if (!clearableStatuses.has(match.status || "")) return true;
+      if (match.winner_id) return true;
+      return score1 > 0 || score2 > 0;
+    },
+  );
+
+  if (hasProtectedMatchResult) {
+    return { error: t("clear_bracket_blocked") };
+  }
+
+  const { error: unlinkError } = await supabase
+    .from("matches")
+    .update({
+      next_match_id: null,
+      next_match_slot: null,
+      next_loser_match_id: null,
+      next_loser_match_slot: null,
+    })
+    .eq("stage_id", stageId);
+
+  if (unlinkError) return { error: unlinkError.message };
+
+  const { error: matchDeleteError } = await supabase
+    .from("matches")
+    .delete()
+    .eq("stage_id", stageId);
+
+  if (matchDeleteError) return { error: matchDeleteError.message };
+
+  const { error: roundDeleteError } = await supabase
+    .from("rounds")
+    .delete()
+    .eq("stage_id", stageId);
+
+  if (roundDeleteError) return { error: roundDeleteError.message };
+
+  const { data: remainingMatches, error: remainingMatchesError } =
+    await supabase
+      .from("matches")
+      .select("id, stages!inner(tournament_id)")
+      .eq("stages.tournament_id", tournamentId)
+      .limit(1);
+
+  if (remainingMatchesError) {
+    return { error: remainingMatchesError.message };
+  }
+
+  if (
+    (remainingMatches || []).length === 0 &&
+    ["in_progress", "completed"].includes(tournamentRow.status || "")
+  ) {
+    const { error: statusError } = await supabase
+      .from("tournaments")
+      .update({ status: "registration_closed" })
+      .eq("id", tournamentId);
+
+    if (statusError) return { error: statusError.message };
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}`);
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  revalidatePath(`/tournaments/${tournamentId}`);
+
+  return { success: true };
+}
+
 export async function updateTournament(
   tournamentId: string,
   formData: FormData,

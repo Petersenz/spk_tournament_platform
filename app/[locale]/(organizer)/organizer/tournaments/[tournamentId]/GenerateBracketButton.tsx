@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "@/lib/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { generateBracket } from "./actions";
-import { Loader2, Play } from "lucide-react";
+import { ActionFeedbackModal } from "@/components/ui/ActionFeedbackModal";
+import { appToast } from "@/lib/app-toast";
+import { clearBracket, generateBracket } from "./actions";
+import { Loader2, Play, Trash2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { toast } from "sonner";
 
 function SubmitButton({ hasMatches }: { hasMatches: boolean }) {
   const { pending } = useFormStatus();
+  const t = useTranslations("Tournament");
 
   return (
     <Button
@@ -19,12 +24,12 @@ function SubmitButton({ hasMatches }: { hasMatches: boolean }) {
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Initializing...
+          {t("initializing")}
         </>
       ) : (
         <>
           <Play className="mr-2 h-4 w-4 fill-current group-hover:scale-125 transition-transform" />
-          {hasMatches ? "Reset & Regenerate" : "Initialize Bracket"}
+          {hasMatches ? t("reset") : t("initialize")}
         </>
       )}
     </Button>
@@ -40,11 +45,38 @@ export function GenerateBracketButton({
   stageId: string;
   hasMatches: boolean;
 }) {
+  const t = useTranslations("Tournament");
+  const router = useRouter();
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
   async function handleAction(formData: FormData) {
     const result = await generateBracket(formData);
     if (result?.error) {
-      toast.error(result.error);
+      appToast.error(result.error);
     }
+  }
+
+  async function handleClearBracket() {
+    setIsClearing(true);
+
+    const formData = new FormData();
+    formData.set("tournament_id", tournamentId);
+    formData.set("stage_id", stageId);
+
+    const result = await clearBracket(formData);
+    setIsClearing(false);
+
+    if (result?.error) {
+      appToast.error(result.error);
+      return;
+    }
+
+    setIsClearModalOpen(false);
+    appToast.success(t("clear_bracket_success"), {
+      description: t("clear_bracket_success_desc"),
+    });
+    router.refresh();
   }
 
   return (
@@ -58,6 +90,38 @@ export function GenerateBracketButton({
         <input type="hidden" name="stage_id" value={stageId} />
         <SubmitButton hasMatches={hasMatches} />
       </form>
+      {hasMatches && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsClearModalOpen(true)}
+          className="h-10 rounded-xl border-red-500/20 bg-red-500/5 px-4 font-display text-[10px] font-black uppercase tracking-widest text-red-300 transition-all hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-200"
+        >
+          <Trash2 className="mr-2 h-3.5 w-3.5" />
+          {t("clear_bracket")}
+        </Button>
+      )}
+      <ActionFeedbackModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        title={t("clear_bracket_title")}
+        description={t("clear_bracket_desc")}
+        status="destructive"
+        primaryAction={{
+          label: t("clear_bracket_confirm"),
+          onClick: handleClearBracket,
+        }}
+        secondaryAction={{
+          label: t("clear_bracket_cancel"),
+          onClick: () => setIsClearModalOpen(false),
+        }}
+        isLoading={isClearing}
+        loadingLabel={t("clear_bracket_loading")}
+      >
+        <div className="rounded-2xl border border-red-500/10 bg-red-500/5 p-4 text-xs font-bold leading-relaxed text-red-100/80">
+          {t("clear_bracket_warning")}
+        </div>
+      </ActionFeedbackModal>
     </div>
   );
 }

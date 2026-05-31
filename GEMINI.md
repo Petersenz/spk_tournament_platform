@@ -44,10 +44,20 @@ Located in `lib/bracket-engine/`, it contains pure functional logic for generati
 - **i18n:** Always use `next-intl` for UI text. Messages are stored in `messages/en.json` and `messages/th.json`. Localization is handled via the `[locale]` dynamic segment.
 - **UI/UX:** Adhere to the design system described in `Design.md`. Prefer dark-first, clean, modern esports aesthetics using the "Samutprakan Esport Association" color palette.
 - **Components:** Use shadcn/ui components located in `components/ui/`. Components should be accessible and responsive.
+- **Shared Feedback UI:** Use `components/ui/ActionFeedbackModal.tsx` for reusable action modals that need loading, warning, success, or destructive states. Use `lib/app-toast.ts` instead of importing `sonner` directly in new code so toast behavior stays consistent.
 - **Surgical Edits:** When modifying code, maintain structural integrity and type safety. Avoid suppressing warnings or using `any`.
 - **Supabase Clients:**
   - Use `lib/supabase/client.ts` (`createBrowserClient`) for browser-side calls in Client Components.
   - Use `lib/supabase/server.ts` (`createServerClient`) for Server Components, Server Actions, and Route Handlers. This client handles cookies automatically for secure server-side operations.
+
+### Participant Seeding
+
+- Participant seed draw is a preview-first workflow in the organizer participant roster.
+- The UI should show the randomized order before saving; never persist a shuffle immediately without review.
+- Seed updates only write to `participants.seed`; no schema changes are required.
+- Seed draw stays locked while bracket matches exist. Use the organizer Clear Bracket flow to delete generated matches/rounds first, then redraw seeds and regenerate the bracket.
+- Clear Bracket must verify owner/admin access and warn that match records, scores, bracket links, and rounds for the stage will be deleted.
+- Server actions that update seeds must verify owner/admin access and ensure all approved participants in the tournament are assigned exactly once.
 
 ## Building and Running
 

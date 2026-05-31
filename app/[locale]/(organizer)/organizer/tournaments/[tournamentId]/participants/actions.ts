@@ -9,6 +9,27 @@ interface ActionResult {
   error?: string;
 }
 
+interface SeedAssignment {
+  participantId: string;
+  seed: number;
+}
+
+function isSeedAssignmentArray(value: unknown): value is SeedAssignment[] {
+  if (!Array.isArray(value)) return false;
+
+  return value.every((item) => {
+    if (!item || typeof item !== "object") return false;
+    const record = item as Record<string, unknown>;
+    const seed = record.seed;
+    return (
+      typeof record.participantId === "string" &&
+      typeof seed === "number" &&
+      Number.isInteger(seed) &&
+      seed > 0
+    );
+  });
+}
+
 export async function approveRegistration(formData: FormData) {
   const supabase = await createClient();
   const registrationId = formData.get("registration_id") as string;
@@ -351,6 +372,136 @@ export async function randomizeSeeds(formData: FormData) {
   await Promise.all(updates);
 
   revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  return { success: true };
+}
+
+export async function applyParticipantSeeds(
+  formData: FormData,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const tournamentId = formData.get("tournament_id") as string;
+  const assignmentsRaw = formData.get("assignments") as string;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized: No session" };
+
+  let assignments: SeedAssignment[];
+  try {
+    const parsed: unknown = JSON.parse(assignmentsRaw);
+    if (!isSeedAssignmentArray(parsed)) {
+      return { error: "Invalid seed assignment payload" };
+    }
+    assignments = parsed;
+  } catch {
+    return { error: "Invalid seed assignment payload" };
+  }
+
+  if (assignments.length < 2) {
+    return { error: "Need at least 2 participants to draw seeds" };
+  }
+
+  const seedSet = new Set(assignments.map((assignment) => assignment.seed));
+  const participantIdSet = new Set(
+    assignments.map((assignment) => assignment.participantId),
+  );
+
+  if (
+    seedSet.size !== assignments.length ||
+    participantIdSet.size !== assignments.length
+  ) {
+    return { error: "Seed assignments must be unique" };
+  }
+
+  const { data: tournament, error: tournamentError } = await supabase
+    .from("tournaments")
+    .select("id, projects(owner_id)")
+    .eq("id", tournamentId)
+    .single();
+
+  if (tournamentError || !tournament) {
+    return { error: "Tournament not found" };
+  }
+
+  const project = Array.isArray(tournament.projects)
+    ? tournament.projects[0]
+    : tournament.projects;
+  const isOwner = project?.owner_id === user.id;
+
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return { error: "Unauthorized: Not owner or admin" };
+    }
+  }
+
+  const { data: matches, error: matchesError } = await supabase
+    .from("matches")
+    .select("id, status, stages!inner(tournament_id)")
+    .eq("stages.tournament_id", tournamentId);
+
+  if (matchesError) {
+    return { error: matchesError.message };
+  }
+
+  if ((matches || []).length > 0) {
+    return {
+      error:
+        "Bracket matches already exist. Regenerate or reset the bracket before changing seeds.",
+    };
+  }
+
+  const { data: participants, error: participantsError } = await supabase
+    .from("participants")
+    .select("id")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "approved");
+
+  if (participantsError || !participants) {
+    return { error: participantsError?.message || "Participants not found" };
+  }
+
+  const approvedIds = new Set(
+    participants.map((participant) => participant.id),
+  );
+  const coversApprovedParticipants =
+    assignments.length === participants.length &&
+    assignments.every((assignment) =>
+      approvedIds.has(assignment.participantId),
+    );
+
+  if (!coversApprovedParticipants) {
+    return {
+      error:
+        "Seed assignments must include every approved participant exactly once",
+    };
+  }
+
+  const updates = assignments.map((assignment) =>
+    supabase
+      .from("participants")
+      .update({ seed: assignment.seed })
+      .eq("id", assignment.participantId)
+      .eq("tournament_id", tournamentId)
+      .eq("status", "approved"),
+  );
+
+  const results = await Promise.all(updates);
+  const failed = results.find((result) => result.error);
+
+  if (failed?.error) {
+    return { error: failed.error.message };
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}/participants`);
+  revalidatePath(`/organizer/tournaments/${tournamentId}`);
   return { success: true };
 }
 

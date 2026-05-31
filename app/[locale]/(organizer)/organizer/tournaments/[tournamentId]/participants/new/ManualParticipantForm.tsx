@@ -26,6 +26,18 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 
+function parseOptionalNumber(value: string): number | null {
+  if (!value.trim()) return null;
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function formatOptionalNumber(value: number | null | undefined): string {
+  return typeof value === "number" && !Number.isNaN(value)
+    ? value.toString()
+    : "";
+}
+
 export function ManualParticipantForm({
   tournamentId,
   teamMaxPlayers = 5,
@@ -100,10 +112,7 @@ export function ManualParticipantForm({
 
     const participantData = {
       ...participantInfo,
-      seed:
-        participantInfo.seed === ""
-          ? null
-          : parseInt(participantInfo.seed as string),
+      seed: parseOptionalNumber(participantInfo.seed),
     };
 
     const playersToSync = players.filter((p) => p.name?.trim());
@@ -414,12 +423,12 @@ export function ManualParticipantForm({
                         </Label>
                         <Input
                           type="number"
-                          value={player.position ?? ""}
+                          value={formatOptionalNumber(player.position)}
                           onChange={(e) =>
                             handlePlayerChange(
                               index,
                               "position",
-                              parseInt(e.target.value),
+                              parseOptionalNumber(e.target.value),
                             )
                           }
                           className="bg-white/[0.03] border-white/5 h-16 rounded-2xl text-lg font-bold px-8 focus:ring-2 focus:ring-brand-primary/20"

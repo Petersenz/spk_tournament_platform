@@ -132,18 +132,91 @@ export async function swapTeamsInMatches(
   // 1. Fetch the two matches
   const { data: match1, error: err1 } = await supabase
     .from("matches")
-    .select("*")
+    .select("*, rounds(number)")
     .eq("id", matchId1)
     .single();
 
   const { data: match2, error: err2 } = await supabase
     .from("matches")
-    .select("*")
+    .select("*, rounds(number)")
     .eq("id", matchId2)
     .single();
 
   if (err1 || err2 || !match1 || !match2) {
     return { error: "One or both matches not found" };
+  }
+
+  if (match1.stage_id !== match2.stage_id) {
+    return { error: "Matches must be in the same stage" };
+  }
+
+  const { data: stage, error: stageError } = await supabase
+    .from("stages")
+    .select("tournament_id")
+    .eq("id", match1.stage_id)
+    .single();
+
+  if (stageError || !stage || stage.tournament_id !== tournamentId) {
+    return { error: "Matches do not belong to this tournament" };
+  }
+
+  const round1 = Array.isArray(match1.rounds)
+    ? match1.rounds[0]?.number
+    : match1.rounds?.number;
+  const round2 = Array.isArray(match2.rounds)
+    ? match2.rounds[0]?.number
+    : match2.rounds?.number;
+
+  if (round1 !== 1 || round2 !== 1) {
+    return { error: "Only first-round teams can be swapped" };
+  }
+
+  if (match1.status === "completed" || match2.status === "completed") {
+    return { error: "Completed matches cannot be swapped" };
+  }
+
+  if (match1.winner_id || match2.winner_id) {
+    return { error: "Matches with recorded winners cannot be swapped" };
+  }
+
+  if (
+    match1.next_match_id ||
+    match2.next_match_id ||
+    match1.next_loser_match_id ||
+    match2.next_loser_match_id
+  ) {
+    const downstreamMatchIds = [
+      match1.next_match_id,
+      match2.next_match_id,
+      match1.next_loser_match_id,
+      match2.next_loser_match_id,
+    ].filter((id): id is string => typeof id === "string");
+
+    if (downstreamMatchIds.length > 0) {
+      const { data: downstreamMatches, error: downstreamError } = await supabase
+        .from("matches")
+        .select("id, participant1_id, participant2_id, winner_id, status")
+        .in("id", downstreamMatchIds);
+
+      if (downstreamError) {
+        return { error: downstreamError.message };
+      }
+
+      const hasDownstreamRecord = (downstreamMatches || []).some(
+        (match) =>
+          !!match.participant1_id ||
+          !!match.participant2_id ||
+          !!match.winner_id ||
+          match.status === "completed",
+      );
+
+      if (hasDownstreamRecord) {
+        return {
+          error:
+            "This bracket already has downstream match records. Team swaps are locked.",
+        };
+      }
+    }
   }
 
   // Get the participant IDs
@@ -170,5 +243,122 @@ export async function swapTeamsInMatches(
   }
 
   revalidatePath(`/organizer/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
+export async function swapMatchesInRound(
+  tournamentId: string,
+  matchId1: string,
+  matchId2: string,
+) {
+  const supabase = await createClient();
+
+  if (matchId1 === matchId2) {
+    return { error: "Choose two different matches to swap" };
+  }
+
+  const { data: match1, error: err1 } = await supabase
+    .from("matches")
+    .select("*, rounds(number)")
+    .eq("id", matchId1)
+    .single();
+
+  const { data: match2, error: err2 } = await supabase
+    .from("matches")
+    .select("*, rounds(number)")
+    .eq("id", matchId2)
+    .single();
+
+  if (err1 || err2 || !match1 || !match2) {
+    return { error: "One or both matches not found" };
+  }
+
+  if (match1.stage_id !== match2.stage_id) {
+    return { error: "Matches must be in the same stage" };
+  }
+
+  const { data: stage, error: stageError } = await supabase
+    .from("stages")
+    .select("tournament_id")
+    .eq("id", match1.stage_id)
+    .single();
+
+  if (stageError || !stage || stage.tournament_id !== tournamentId) {
+    return { error: "Matches do not belong to this tournament" };
+  }
+
+  const round1 = Array.isArray(match1.rounds)
+    ? match1.rounds[0]?.number
+    : match1.rounds?.number;
+  const round2 = Array.isArray(match2.rounds)
+    ? match2.rounds[0]?.number
+    : match2.rounds?.number;
+
+  if (round1 !== 1 || round2 !== 1) {
+    return { error: "Only first-round matches can be swapped" };
+  }
+
+  if (match1.status === "completed" || match2.status === "completed") {
+    return { error: "Completed matches cannot be swapped" };
+  }
+
+  if (match1.winner_id || match2.winner_id) {
+    return { error: "Matches with recorded winners cannot be swapped" };
+  }
+
+  const match1Restore = {
+    participant1_id: match1.participant1_id,
+    participant2_id: match1.participant2_id,
+    winner_id: match1.winner_id,
+    score_participant1: match1.score_participant1,
+    score_participant2: match1.score_participant2,
+    status: match1.status,
+  };
+
+  const match2Restore = {
+    participant1_id: match2.participant1_id,
+    participant2_id: match2.participant2_id,
+    winner_id: match2.winner_id,
+    score_participant1: match2.score_participant1,
+    score_participant2: match2.score_participant2,
+    status: match2.status,
+  };
+
+  const { error: updateErr1 } = await supabase
+    .from("matches")
+    .update({
+      participant1_id: match2.participant1_id,
+      participant2_id: match2.participant2_id,
+      winner_id: null,
+      score_participant1: 0,
+      score_participant2: 0,
+      status: "pending",
+    })
+    .eq("id", matchId1);
+
+  if (updateErr1) {
+    return { error: updateErr1.message };
+  }
+
+  const { error: updateErr2 } = await supabase
+    .from("matches")
+    .update({
+      participant1_id: match1.participant1_id,
+      participant2_id: match1.participant2_id,
+      winner_id: null,
+      score_participant1: 0,
+      score_participant2: 0,
+      status: "pending",
+    })
+    .eq("id", matchId2);
+
+  if (updateErr2) {
+    await supabase.from("matches").update(match1Restore).eq("id", matchId1);
+    await supabase.from("matches").update(match2Restore).eq("id", matchId2);
+    return { error: "Failed to swap matches. No changes were saved." };
+  }
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}`);
+  revalidatePath(`/tournaments/${tournamentId}`);
   return { success: true };
 }

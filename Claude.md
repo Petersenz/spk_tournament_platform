@@ -314,3 +314,13 @@ SUPABASE_SERVICE_ROLE_KEY=     # Only for API routes that need elevated access
 - BYE handling: pad participants to next power of 2 for elimination brackets
 - Standard seeding: top seed plays lowest seed (1v16, 8v9, 4v13, 5v12)
 - Free tier limits: Supabase 500MB DB, 1GB storage; Vercel 100GB bandwidth
+
+## Current Implementation Notes
+
+- The current app runs on Next.js 16 + React 19, even if older planning notes mention Next.js 14.
+- Shared action feedback should use `components/ui/ActionFeedbackModal.tsx`; do not create one-off confirmation/loading modals unless the shared component cannot fit the case.
+- New client-side toast usage should go through `lib/app-toast.ts`, which wraps Sonner and keeps success/error/loading patterns consistent.
+- Participant seed draw is preview-first: show the randomized order, allow shuffle again, then apply. It updates only `participants.seed`.
+- Seed draw stays locked while bracket matches exist. Use the organizer Clear Bracket flow to delete generated matches/rounds first, then redraw seeds and regenerate the bracket.
+- Clear Bracket must verify owner/admin access and warn that match records, scores, bracket links, and rounds for the stage will be deleted.
+- Seed update actions must verify owner/admin access, tournament ownership, approved participant coverage, and unique seed values.

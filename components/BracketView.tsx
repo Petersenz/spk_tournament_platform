@@ -16,9 +16,11 @@ import {
   Maximize2,
   Minimize2,
   RotateCcw,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   reportMatchScore,
+  swapMatchesInRound,
   swapTeamsInMatches,
 } from "@/app/[locale]/(organizer)/organizer/tournaments/[tournamentId]/match-actions";
 import { MatchDetailModal } from "./MatchDetailModal";
@@ -110,6 +112,26 @@ export function BracketView({
   }
   const [swapState, setSwapState] = useState<SwapState | null>(null);
 
+  interface MatchSwapCandidate {
+    matchId: string;
+    matchLabel: string;
+    matchupName: string;
+  }
+  const [matchSwapCandidate, setMatchSwapCandidate] =
+    useState<MatchSwapCandidate | null>(null);
+
+  interface MatchSwapState {
+    matchId1: string;
+    matchLabel1: string;
+    matchupName1: string;
+    matchId2: string;
+    matchLabel2: string;
+    matchupName2: string;
+  }
+  const [matchSwapState, setMatchSwapState] = useState<MatchSwapState | null>(
+    null,
+  );
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -197,6 +219,9 @@ export function BracketView({
     const teamName = field === "participant1_id" ? m?.p1?.name : m?.p2?.name;
 
     if (isOrganizer && roundNumber === 1 && m?.status !== "completed") {
+      setMatchSwapCandidate(null);
+      setMatchSwapState(null);
+
       if (!swapCandidate) {
         // First selection: set it as the candidate
         setSwapCandidate({
@@ -233,6 +258,59 @@ export function BracketView({
         prev === participantId ? null : participantId,
       );
     }
+  };
+
+  const getMatchupName = (match: Match): string => {
+    const firstName = match.p1?.name || t("bye");
+    const secondName = match.p2?.name || t("bye");
+    return `${firstName} vs ${secondName}`;
+  };
+
+  const getMatchLabel = (match: Match): string =>
+    `#${match.match_number || "-"}`;
+
+  const clearMatchSwap = () => {
+    setMatchSwapCandidate(null);
+    setMatchSwapState(null);
+  };
+
+  const handleMatchSwapClick = (match: Match) => {
+    if (
+      !isOrganizer ||
+      match.rounds?.number !== 1 ||
+      match.status === "completed"
+    ) {
+      return;
+    }
+
+    const candidate = {
+      matchId: match.id,
+      matchLabel: getMatchLabel(match),
+      matchupName: getMatchupName(match),
+    };
+
+    setSwapCandidate(null);
+    setSwapState(null);
+    setTrackedTeamId(null);
+
+    if (!matchSwapCandidate) {
+      setMatchSwapCandidate(candidate);
+      return;
+    }
+
+    if (matchSwapCandidate.matchId === match.id) {
+      clearMatchSwap();
+      return;
+    }
+
+    setMatchSwapState({
+      matchId1: matchSwapCandidate.matchId,
+      matchLabel1: matchSwapCandidate.matchLabel,
+      matchupName1: matchSwapCandidate.matchupName,
+      matchId2: candidate.matchId,
+      matchLabel2: candidate.matchLabel,
+      matchupName2: candidate.matchupName,
+    });
   };
 
   const fetchMatches = useCallback(async () => {
@@ -339,6 +417,7 @@ export function BracketView({
       return m.winner_id === m.participant1_id ? m.p2 : m.p1;
     })
     .filter((p): p is { name: string; logo_url?: string | null } => !!p);
+  const displayedThirdPlaces = thirdPlaces.slice(0, 2);
 
   if (roundNumbers.length === 0) {
     return (
@@ -418,29 +497,31 @@ export function BracketView({
 
                 {/* 3rd Place */}
                 <div className="order-3 md:order-3 flex flex-col items-center">
-                  <div className="h-16 w-16 rounded-xl bg-white/5 border border-[#CD7F32]/20 flex items-center justify-center mb-4 text-[#CD7F32] shadow-[0_0_15px_rgba(205,127,50,0.2)] overflow-hidden relative">
-                    {thirdPlaces[0]?.logo_url ? (
-                      <Image
-                        src={thirdPlaces[0].logo_url}
-                        alt={thirdPlaces[0].name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <Medal className="h-8 w-8" />
-                    )}
-                  </div>
                   <div className="text-xs font-bold text-[#CD7F32] uppercase tracking-widest mb-2">
                     {t("bronze")}
                   </div>
-                  <div className="flex flex-col items-center gap-1.5 w-full">
-                    {thirdPlaces.length > 0 ? (
-                      thirdPlaces.map((p, i: number) => (
+                  <div className="flex w-full flex-row flex-wrap items-start justify-center gap-3">
+                    {displayedThirdPlaces.length > 0 ? (
+                      displayedThirdPlaces.map((p, i: number) => (
                         <div
-                          key={i}
-                          className="font-display text-xl font-black text-white uppercase truncate max-w-full px-2"
+                          key={`${p.name}-${i}`}
+                          className="flex w-[88px] min-w-0 flex-col items-center gap-2 sm:w-[104px]"
                         >
-                          {p.name}
+                          <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-[#CD7F32]/20 bg-white/5 text-[#CD7F32] shadow-[0_0_15px_rgba(205,127,50,0.2)]">
+                            {p.logo_url ? (
+                              <Image
+                                src={p.logo_url}
+                                alt={p.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <Medal className="h-8 w-8" />
+                            )}
+                          </div>
+                          <div className="font-display w-full truncate px-1 text-center text-sm font-black uppercase text-white sm:text-base">
+                            {p.name}
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -615,6 +696,14 @@ export function BracketView({
                             trackedTeamId &&
                             (match.participant1_id === trackedTeamId ||
                               match.participant2_id === trackedTeamId);
+                          const isMatchSwapSelected =
+                            matchSwapCandidate?.matchId === match.id ||
+                            matchSwapState?.matchId1 === match.id ||
+                            matchSwapState?.matchId2 === match.id;
+                          const canSwapWholeMatch =
+                            isOrganizer &&
+                            match.rounds?.number === 1 &&
+                            match.status !== "completed";
 
                           return (
                             <div
@@ -635,11 +724,13 @@ export function BracketView({
                                       }
                                     }}
                                     className={`relative z-10 w-full h-full bg-[#0c0c0e] border-2 rounded-[2rem] overflow-hidden transition-all shadow-xl p-2 ${
-                                      isMatchTracked
-                                        ? "border-brand-primary/80 shadow-[0_0_20px_rgba(244,0,9,0.35)] scale-[1.02]"
-                                        : match.status === "completed"
-                                          ? "border-success/20 shadow-success/5"
-                                          : "border-white/5 hover:border-brand-primary/30"
+                                      isMatchSwapSelected
+                                        ? "border-warning/80 shadow-[0_0_20px_rgba(245,158,11,0.25)] scale-[1.02]"
+                                        : isMatchTracked
+                                          ? "border-brand-primary/80 shadow-[0_0_20px_rgba(244,0,9,0.35)] scale-[1.02]"
+                                          : match.status === "completed"
+                                            ? "border-success/20 shadow-success/5"
+                                            : "border-white/5 hover:border-brand-primary/30"
                                     }`}
                                   >
                                     <input
@@ -668,15 +759,36 @@ export function BracketView({
                                             </div>
                                           )}
                                         </div>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setSelectedMatch(match)
-                                          }
-                                          className="h-7 w-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-text-tertiary hover:bg-brand-primary hover:text-white transition-all shadow-lg"
-                                        >
-                                          <Settings2 className="h-3.5 w-3.5" />
-                                        </button>
+                                        <div className="flex items-center gap-1.5">
+                                          {canSwapWholeMatch && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleMatchSwapClick(match)
+                                              }
+                                              className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all shadow-lg ${
+                                                isMatchSwapSelected
+                                                  ? "bg-warning text-black border-warning"
+                                                  : "bg-white/5 border-white/10 text-text-tertiary hover:bg-warning hover:text-black hover:border-warning"
+                                              }`}
+                                              title={t("swap_match_title")}
+                                              aria-label={t("swap_match_title")}
+                                            >
+                                              <ArrowUpDown className="h-3.5 w-3.5" />
+                                            </button>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setSelectedMatch(match)
+                                            }
+                                            className="h-7 w-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-text-tertiary hover:bg-brand-primary hover:text-white transition-all shadow-lg"
+                                            title={t("match_settings")}
+                                            aria-label={t("match_settings")}
+                                          >
+                                            <Settings2 className="h-3.5 w-3.5" />
+                                          </button>
+                                        </div>
                                       </div>
                                     )}
 
@@ -951,6 +1063,87 @@ export function BracketView({
         </div>
 
         {/* Floating Swap Confirmation dialog bar */}
+        {isOrganizer && matchSwapCandidate && !matchSwapState && (
+          <div className="absolute bottom-6 left-1/2 z-40 flex w-11/12 max-w-xl -translate-x-1/2 items-center justify-between gap-4 rounded-3xl border border-warning/50 bg-[#0c0c0e]/95 p-4 px-6 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 md:w-auto">
+            <div className="min-w-0">
+              <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-warning">
+                {t("pending_match_swap")} {matchSwapCandidate.matchLabel}
+              </span>
+              <p className="mt-1 truncate text-xs font-bold text-text-tertiary">
+                {t("select_match_to_swap")}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearMatchSwap}
+              className="shrink-0 rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 cursor-pointer"
+            >
+              {t("cancel_swap")}
+            </button>
+          </div>
+        )}
+
+        {isOrganizer && matchSwapState && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex w-11/12 max-w-2xl flex-col gap-4 rounded-3xl border-2 border-warning bg-[#0c0c0e]/95 p-4 px-6 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 md:w-auto md:flex-row md:items-center md:gap-6">
+            <div className="flex min-w-0 flex-col gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-warning">
+                {t("pending_match_swap")}
+              </span>
+              <p className="text-xs font-bold tracking-tight text-white">
+                {t.rich("match_swap_question", {
+                  match1: () => (
+                    <span className="font-black uppercase text-warning">
+                      {matchSwapState.matchLabel1}
+                    </span>
+                  ),
+                  match2: () => (
+                    <span className="font-black uppercase text-warning">
+                      {matchSwapState.matchLabel2}
+                    </span>
+                  ),
+                })}
+              </p>
+              <div className="grid gap-2 text-[10px] font-bold uppercase tracking-wider text-text-tertiary sm:grid-cols-2">
+                <span className="truncate rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+                  {matchSwapState.matchupName1}
+                </span>
+                <span className="truncate rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+                  {matchSwapState.matchupName2}
+                </span>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const result = await swapMatchesInRound(
+                    tournamentId,
+                    matchSwapState.matchId1,
+                    matchSwapState.matchId2,
+                  );
+                  if (result.success) {
+                    await fetchMatches();
+                    clearMatchSwap();
+                    router.refresh();
+                  } else {
+                    alert(result.error || "Failed to swap matches");
+                  }
+                }}
+                className="rounded-xl bg-warning px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-warning/80 cursor-pointer"
+              >
+                {t("confirm_match_swap")}
+              </button>
+              <button
+                type="button"
+                onClick={clearMatchSwap}
+                className="rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 cursor-pointer"
+              >
+                {t("cancel_swap")}
+              </button>
+            </div>
+          </div>
+        )}
+
         {isOrganizer && swapState && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-6 bg-[#0c0c0e]/95 backdrop-blur-md border-2 border-brand-primary p-4 px-6 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 max-w-lg w-11/12 md:w-auto">
             <div className="flex flex-col gap-1">

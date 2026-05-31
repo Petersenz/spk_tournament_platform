@@ -15,12 +15,15 @@ import {
   Calendar,
   User,
   Plus,
+  Dices,
+  Lock,
 } from "lucide-react";
 import { deleteMultipleParticipants } from "./actions";
 import { useRouter } from "next/navigation";
 import { PremiumModal } from "@/components/ui/PremiumModal";
 import { Input } from "@/components/ui/input";
 import { ParticipantEditModal } from "./ParticipantEditModal";
+import { SeedDrawModal } from "./SeedDrawModal";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import { Participant } from "./types";
@@ -32,28 +35,49 @@ export function ParticipantsTable({
   tournamentId,
   tournamentSize,
   teamMaxPlayers = 5,
+  hasGeneratedMatches = false,
+  hasCompletedMatches = false,
 }: {
   participants: Participant[];
   tournamentId: string;
   tournamentSize: number;
   teamMaxPlayers?: number;
+  hasGeneratedMatches?: boolean;
+  hasCompletedMatches?: boolean;
 }) {
   const t = useTranslations("Organizer.participants.table");
   const delT = useTranslations("Organizer.participants.delete_confirm");
   const common = useTranslations("Common");
   const locale = useLocale();
+  const hasAnySeed = participants.some((participant) => participant.seed);
+  const approvedParticipants = participants.filter(
+    (participant) => participant.status === "approved",
+  );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSeedDraw, setShowSeedDraw] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "date" | "seed">("date");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<"name" | "date" | "seed">(
+    hasAnySeed ? "seed" : "date",
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
+    hasAnySeed ? "asc" : "desc",
+  );
   const [editingParticipant, setEditingParticipant] =
     useState<Participant | null>(null);
 
   const router = useRouter();
+
+  const seedDrawDisabledReason = hasCompletedMatches
+    ? t("seed_draw.lock_completed")
+    : hasGeneratedMatches
+      ? t("seed_draw.lock_generated")
+      : approvedParticipants.length < 2
+        ? t("seed_draw.lock_minimum")
+        : undefined;
 
   useEffect(() => {
     if (editingParticipant) {
@@ -185,6 +209,22 @@ export function ParticipantsTable({
 
           <div className="flex items-center gap-4">
             <button
+              type="button"
+              onClick={() => setShowSeedDraw(true)}
+              className={`h-12 px-5 flex items-center gap-2 text-base font-bold transition-all rounded-xl border ${
+                seedDrawDisabledReason
+                  ? "bg-warning/10 border-warning/20 text-warning hover:bg-warning/15"
+                  : "bg-brand-primary text-white border-brand-primary hover:bg-white hover:text-black"
+              }`}
+            >
+              {seedDrawDisabledReason ? (
+                <Lock className="h-4 w-4" />
+              ) : (
+                <Dices className="h-4 w-4" />
+              )}
+              {t("seed_draw.button")}
+            </button>
+            <button
               onClick={handleRefresh}
               disabled={refreshing}
               className="h-12 px-5 flex items-center gap-2 text-base font-bold text-text-tertiary hover:text-white transition-all bg-white/5 rounded-xl border border-white/5"
@@ -303,6 +343,7 @@ export function ParticipantsTable({
                       )}
                   </button>
                 </th>
+                <th className="py-6 px-4 w-28">{t("seed")}</th>
                 <th className="py-6 px-4">{t("name")}</th>
                 <th className="py-6 px-4">{t("email")}</th>
                 <th className="py-6 px-4 text-right">{t("created_at")}</th>
@@ -312,7 +353,7 @@ export function ParticipantsTable({
             <tbody className="divide-y divide-white/[0.03]">
               {filteredAndSortedParticipants.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-24 text-center">
+                  <td colSpan={6} className="py-24 text-center">
                     <div className="flex flex-col items-center gap-6 opacity-20">
                       <Users className="h-16 w-16" />
                       <span className="font-black uppercase tracking-[0.2em] text-base">
@@ -355,6 +396,11 @@ export function ParticipantsTable({
                             <div className="h-2.5 w-2.5 bg-white rounded-sm" />
                           )}
                         </button>
+                      </td>
+                      <td className="py-8 px-4">
+                        <div className="flex h-10 w-16 items-center justify-center rounded-xl border border-white/5 bg-white/[0.03] font-display text-lg font-black text-brand-primary">
+                          {p.seed || "-"}
+                        </div>
                       </td>
                       <td className="py-8 px-4">
                         <div className="flex items-center gap-6">
@@ -486,6 +532,14 @@ export function ParticipantsTable({
           teamMaxPlayers={teamMaxPlayers}
         />
       )}
+
+      <SeedDrawModal
+        isOpen={showSeedDraw}
+        onClose={() => setShowSeedDraw(false)}
+        participants={approvedParticipants}
+        tournamentId={tournamentId}
+        disabledReason={seedDrawDisabledReason}
+      />
     </div>
   );
 }
