@@ -17,6 +17,7 @@ import {
   Minimize2,
   RotateCcw,
   ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 import {
   reportMatchScore,
@@ -28,6 +29,7 @@ import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/lib/i18n/routing";
 import Image from "next/image";
+import { appToast } from "@/lib/app-toast";
 
 function SaveButton({ disabled }: { disabled?: boolean }) {
   const t = useTranslations("Tournament");
@@ -111,6 +113,7 @@ export function BracketView({
     teamName2: string;
   }
   const [swapState, setSwapState] = useState<SwapState | null>(null);
+  const [isTeamSwapPending, setIsTeamSwapPending] = useState(false);
 
   interface MatchSwapCandidate {
     matchId: string;
@@ -131,6 +134,7 @@ export function BracketView({
   const [matchSwapState, setMatchSwapState] = useState<MatchSwapState | null>(
     null,
   );
+  const [isMatchSwapPending, setIsMatchSwapPending] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -214,6 +218,8 @@ export function BracketView({
     field: "participant1_id" | "participant2_id",
     roundNumber: number,
   ) => {
+    if (isTeamSwapPending || isMatchSwapPending) return;
+
     // Determine active name
     const m = matches.find((match) => match.id === matchId);
     const teamName = field === "participant1_id" ? m?.p1?.name : m?.p2?.name;
@@ -275,6 +281,8 @@ export function BracketView({
   };
 
   const handleMatchSwapClick = (match: Match) => {
+    if (isTeamSwapPending || isMatchSwapPending) return;
+
     if (
       !isOrganizer ||
       match.rounds?.number !== 1 ||
@@ -311,6 +319,58 @@ export function BracketView({
       matchLabel2: candidate.matchLabel,
       matchupName2: candidate.matchupName,
     });
+  };
+
+  const handleConfirmMatchSwap = async () => {
+    if (!matchSwapState || isMatchSwapPending) return;
+
+    setIsMatchSwapPending(true);
+    const toastId = appToast.loading(t("match_swap_loading"));
+    const result = await swapMatchesInRound(
+      tournamentId,
+      matchSwapState.matchId1,
+      matchSwapState.matchId2,
+    );
+    appToast.dismiss(toastId);
+    setIsMatchSwapPending(false);
+
+    if (result.success) {
+      appToast.success(t("match_swap_success"));
+      await fetchMatches();
+      clearMatchSwap();
+      router.refresh();
+      return;
+    }
+
+    appToast.error(result.error || t("match_swap_failed"));
+  };
+
+  const handleConfirmTeamSwap = async () => {
+    if (!swapState || isTeamSwapPending) return;
+
+    setIsTeamSwapPending(true);
+    const toastId = appToast.loading(t("swap_loading"));
+    const result = await swapTeamsInMatches(
+      tournamentId,
+      swapState.matchId1,
+      swapState.field1,
+      swapState.matchId2,
+      swapState.field2,
+    );
+    appToast.dismiss(toastId);
+    setIsTeamSwapPending(false);
+
+    if (result.success) {
+      appToast.success(t("swap_success"));
+      await fetchMatches();
+      setSwapCandidate(null);
+      setSwapState(null);
+      setTrackedTeamId(null);
+      router.refresh();
+      return;
+    }
+
+    appToast.error(result.error || t("swap_failed"));
   };
 
   const fetchMatches = useCallback(async () => {
@@ -1076,7 +1136,8 @@ export function BracketView({
             <button
               type="button"
               onClick={clearMatchSwap}
-              className="shrink-0 rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 cursor-pointer"
+              disabled={isMatchSwapPending}
+              className="shrink-0 rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
             >
               {t("cancel_swap")}
             </button>
@@ -1115,28 +1176,24 @@ export function BracketView({
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                onClick={async () => {
-                  const result = await swapMatchesInRound(
-                    tournamentId,
-                    matchSwapState.matchId1,
-                    matchSwapState.matchId2,
-                  );
-                  if (result.success) {
-                    await fetchMatches();
-                    clearMatchSwap();
-                    router.refresh();
-                  } else {
-                    alert(result.error || "Failed to swap matches");
-                  }
-                }}
-                className="rounded-xl bg-warning px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-warning/80 cursor-pointer"
+                onClick={handleConfirmMatchSwap}
+                disabled={isMatchSwapPending}
+                className="rounded-xl bg-warning px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-warning/80 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
               >
-                {t("confirm_match_swap")}
+                {isMatchSwapPending ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t("match_swap_loading")}
+                  </span>
+                ) : (
+                  t("confirm_match_swap")
+                )}
               </button>
               <button
                 type="button"
                 onClick={clearMatchSwap}
-                className="rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 cursor-pointer"
+                disabled={isMatchSwapPending}
+                className="rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
                 {t("cancel_swap")}
               </button>
@@ -1168,27 +1225,18 @@ export function BracketView({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={async () => {
-                  const result = await swapTeamsInMatches(
-                    tournamentId,
-                    swapState.matchId1,
-                    swapState.field1,
-                    swapState.matchId2,
-                    swapState.field2,
-                  );
-                  if (result.success) {
-                    await fetchMatches();
-                    setSwapCandidate(null);
-                    setSwapState(null);
-                    setTrackedTeamId(null);
-                    router.refresh();
-                  } else {
-                    alert(result.error || "Failed to swap teams");
-                  }
-                }}
-                className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/80 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                onClick={handleConfirmTeamSwap}
+                disabled={isTeamSwapPending}
+                className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/80 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
               >
-                {t("confirm_swap")}
+                {isTeamSwapPending ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t("swap_loading")}
+                  </span>
+                ) : (
+                  t("confirm_swap")
+                )}
               </button>
               <button
                 type="button"
@@ -1197,7 +1245,8 @@ export function BracketView({
                   setSwapState(null);
                   setTrackedTeamId(null);
                 }}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                disabled={isTeamSwapPending}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
                 {t("cancel_swap")}
               </button>
