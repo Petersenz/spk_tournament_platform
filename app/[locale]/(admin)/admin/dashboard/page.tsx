@@ -1,14 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import {
+  ChevronRight,
   Trophy,
   Users,
   Gamepad2,
   Settings,
   Monitor,
-  ChevronRight,
 } from "lucide-react";
 import { Link } from "@/lib/i18n/routing";
 import { getTranslations } from "next-intl/server";
+import { Button } from "@/components/ui/button";
 
 export async function generateMetadata({
   params,
@@ -21,6 +22,7 @@ export async function generateMetadata({
 }
 
 export default async function AdminDashboardPage() {
+  const t = await getTranslations("Admin.dashboard_page");
   const supabase = await createClient();
 
   const { count: userCount } = await supabase
@@ -38,59 +40,59 @@ export default async function AdminDashboardPage() {
 
   const stats = [
     {
-      label: "Total Users",
+      label: t("stats.users.label"),
       value: userCount || 0,
       icon: Users,
       color: "text-brand-primary",
-      trend: "Global users",
+      trend: t("stats.users.trend"),
     },
     {
-      label: "Total Tournaments",
+      label: t("stats.tournaments.label"),
       value: tournamentCount || 0,
       icon: Trophy,
       color: "text-warning",
-      trend: "Created arenas",
+      trend: t("stats.tournaments.trend"),
     },
     {
-      label: "Game Library",
+      label: t("stats.games.label"),
       value: gameCount || 0,
       icon: Gamepad2,
       color: "text-success",
-      trend: "Supported titles",
+      trend: t("stats.games.trend"),
     },
     {
-      label: "Platforms",
+      label: t("stats.platforms.label"),
       value: platformCount || 0,
       icon: Monitor,
       color: "text-info",
-      trend: "Supported systems",
+      trend: t("stats.platforms.trend"),
     },
   ];
 
   const systemTools = [
     {
-      label: "Register Game",
+      label: t("tools.register_game.label"),
       icon: Gamepad2,
       href: "/admin/games/new",
-      description: "Add a new title to the public game library.",
+      description: t("tools.register_game.description"),
     },
     {
-      label: "Manage Users",
+      label: t("tools.manage_users.label"),
       icon: Users,
       href: "/admin/users",
-      description: "Review users, update roles, and remove inactive accounts.",
+      description: t("tools.manage_users.description"),
     },
     {
-      label: "Platforms",
+      label: t("tools.platforms.label"),
       icon: Monitor,
       href: "/admin/platforms",
-      description: "Maintain devices and networks used by game titles.",
+      description: t("tools.platforms.description"),
     },
     {
-      label: "System Settings",
+      label: t("tools.settings.label"),
       icon: Settings,
       href: "/admin/settings",
-      description: "Update site content, branding, navigation, and modules.",
+      description: t("tools.settings.description"),
     },
   ];
 
@@ -101,16 +103,26 @@ export default async function AdminDashboardPage() {
           <div className="flex items-center gap-3 mb-2">
             <span className="h-2 w-2 rounded-full bg-brand-primary animate-pulse"></span>
             <span className="text-[10px] font-black text-brand-primary uppercase tracking-[0.4em]">
-              Live Telemetry
+              {t("badge")}
             </span>
           </div>
           <h1 className="font-display text-5xl font-black uppercase tracking-tighter text-white">
-            System Overview
+            {t("title")}
           </h1>
           <p className="text-text-secondary mt-2 font-medium">
-            Real-time platform metrics and global administration.
+            {t("subtitle")}
           </p>
         </div>
+
+        <Link href="/organizer/dashboard">
+          <Button
+            variant="outline"
+            className="h-12 rounded-2xl border-2 border-brand-primary/50 bg-transparent px-6 font-display text-xs font-bold uppercase tracking-widest text-brand-primary transition-all hover:bg-brand-primary hover:text-white"
+          >
+            <Trophy className="mr-2 h-4 w-4" />
+            {t("organizer_dashboard")}
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -141,10 +153,10 @@ export default async function AdminDashboardPage() {
       <div className="space-y-8">
         <div>
           <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-            System Tools
+            {t("tools_title")}
           </h2>
           <p className="text-sm text-text-tertiary font-medium mt-2">
-            Shortcuts for the admin tasks that keep the platform ready for use.
+            {t("tools_subtitle")}
           </p>
         </div>
 

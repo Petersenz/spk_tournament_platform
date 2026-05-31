@@ -673,6 +673,50 @@
     "users": "User Management",
     "platforms": "Platforms",
     "settings": "System Settings",
+    "dashboard_page": {
+      "badge": "Live Telemetry",
+      "title": "System Overview",
+      "subtitle": "Real-time platform metrics and global administration.",
+      "organizer_dashboard": "Organizer Dashboard",
+      "tools_title": "System Tools",
+      "tools_subtitle": "Shortcuts for the admin tasks that keep the platform ready for use.",
+      "stats": {
+        "users": {
+          "label": "Total Users",
+          "trend": "Global users"
+        },
+        "tournaments": {
+          "label": "Total Tournaments",
+          "trend": "Created arenas"
+        },
+        "games": {
+          "label": "Game Library",
+          "trend": "Supported titles"
+        },
+        "platforms": {
+          "label": "Platforms",
+          "trend": "Supported systems"
+        }
+      },
+      "tools": {
+        "register_game": {
+          "label": "Register Game",
+          "description": "Add a new title to the public game library."
+        },
+        "manage_users": {
+          "label": "Manage Users",
+          "description": "Review users, update roles, and remove inactive accounts."
+        },
+        "platforms": {
+          "label": "Platforms",
+          "description": "Maintain devices and networks used by game titles."
+        },
+        "settings": {
+          "label": "System Settings",
+          "description": "Update site content, branding, navigation, and modules."
+        }
+      }
+    },
     "add_platform": "Add Platform",
     "edit_platform": "Edit Platform",
     "delete_platform": "Delete Platform",
