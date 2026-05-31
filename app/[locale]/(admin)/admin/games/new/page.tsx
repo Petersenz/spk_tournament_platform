@@ -1,8 +1,15 @@
 import { GameForm } from "@/components/admin/GameForm";
 import { Link } from "@/lib/i18n/routing";
 import { ChevronLeft } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
-export default function NewGamePage() {
+export default async function NewGamePage() {
+  const supabase = await createClient();
+  const { data: platforms } = await supabase
+    .from("platforms")
+    .select("id, name, icon_url")
+    .order("name");
+
   return (
     <div className="space-y-12 max-w-6xl mx-auto">
       <div className="flex flex-col gap-4">
@@ -20,7 +27,7 @@ export default function NewGamePage() {
         </p>
       </div>
 
-      <GameForm />
+      <GameForm platforms={platforms || []} />
     </div>
   );
 }

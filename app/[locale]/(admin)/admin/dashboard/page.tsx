@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { Trophy, Users, Gamepad2, BarChart3, ShieldAlert } from "lucide-react";
+import {
+  Trophy,
+  Users,
+  Gamepad2,
+  Settings,
+  Monitor,
+  ChevronRight,
+} from "lucide-react";
 import { Link } from "@/lib/i18n/routing";
 import { getTranslations } from "next-intl/server";
 
@@ -16,7 +23,6 @@ export async function generateMetadata({
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
-  // Fetch Global Stats
   const { count: userCount } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true });
@@ -26,16 +32,9 @@ export default async function AdminDashboardPage() {
   const { count: gameCount } = await supabase
     .from("games")
     .select("*", { count: "exact", head: true });
-  const { count: registrationCount } = await supabase
-    .from("registrations")
+  const { count: platformCount } = await supabase
+    .from("platforms")
     .select("*", { count: "exact", head: true });
-
-  // Fetch Real Recent Activity
-  const { data: recentRegistrations } = await supabase
-    .from("registrations")
-    .select("*, profiles(nickname), tournaments(name)")
-    .order("created_at", { ascending: false })
-    .limit(5);
 
   const stats = [
     {
@@ -60,17 +59,43 @@ export default async function AdminDashboardPage() {
       trend: "Supported titles",
     },
     {
-      label: "Total Registrations",
-      value: registrationCount || 0,
-      icon: BarChart3,
+      label: "Platforms",
+      value: platformCount || 0,
+      icon: Monitor,
       color: "text-info",
-      trend: "Player entries",
+      trend: "Supported systems",
+    },
+  ];
+
+  const systemTools = [
+    {
+      label: "Register Game",
+      icon: Gamepad2,
+      href: "/admin/games/new",
+      description: "Add a new title to the public game library.",
+    },
+    {
+      label: "Manage Users",
+      icon: Users,
+      href: "/admin/users",
+      description: "Review users, update roles, and remove inactive accounts.",
+    },
+    {
+      label: "Platforms",
+      icon: Monitor,
+      href: "/admin/platforms",
+      description: "Maintain devices and networks used by game titles.",
+    },
+    {
+      label: "System Settings",
+      icon: Settings,
+      href: "/admin/settings",
+      description: "Update site content, branding, navigation, and modules.",
     },
   ];
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -88,11 +113,10 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* STATS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {stats.map((stat, i) => (
+        {stats.map((stat) => (
           <div
-            key={i}
+            key={stat.label}
             className="bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] p-10 hover:border-brand-primary/30 transition-all group relative overflow-hidden shadow-2xl"
           >
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-all duration-700">
@@ -114,111 +138,37 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* RECENT ACTIVITY */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
-              Recent Registrations
-            </h2>
-            <Link
-              href="/admin/reports"
-              className="text-[10px] text-brand-primary font-black uppercase tracking-[0.2em] hover:text-white transition-colors"
-            >
-              View All Logs
-            </Link>
-          </div>
-          <div className="bg-[#0c0c0e] border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
-            <div className="p-4 bg-white/2 border-b border-white/5 grid grid-cols-4 text-[10px] font-black uppercase tracking-widest text-text-tertiary px-10">
-              <span>Player</span>
-              <span>Tournament</span>
-              <span>Applied At</span>
-              <span className="text-right">Status</span>
-            </div>
-            <div className="divide-y divide-white/5">
-              {recentRegistrations?.length === 0 ? (
-                <div className="p-20 text-center text-text-tertiary uppercase font-black tracking-widest text-xs">
-                  No activity yet
-                </div>
-              ) : (
-                recentRegistrations?.map((reg) => (
-                  <div
-                    key={reg.id}
-                    className="px-10 py-6 grid grid-cols-4 items-center hover:bg-white/2 transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary text-[10px] font-black uppercase">
-                        {reg.profiles?.nickname?.charAt(0) || "P"}
-                      </div>
-                      <span className="text-sm font-black text-white">
-                        {reg.profiles?.nickname}
-                      </span>
-                    </div>
-                    <span className="text-xs font-bold text-text-secondary truncate">
-                      {reg.tournaments?.name}
-                    </span>
-                    <span className="text-xs text-text-tertiary font-medium">
-                      {new Date(reg.created_at).toLocaleDateString()}
-                    </span>
-                    <div className="text-right">
-                      <span
-                        className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-wider ${
-                          reg.status === "approved"
-                            ? "bg-success/10 text-success border border-success/20"
-                            : reg.status === "pending"
-                              ? "bg-warning/10 text-warning border border-warning/20"
-                              : "bg-white/5 text-text-tertiary"
-                        }`}
-                      >
-                        {reg.status}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-8">
+      <div className="space-y-8">
+        <div>
           <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
             System Tools
           </h2>
-          <div className="space-y-4">
-            {[
-              {
-                label: "Register Game",
-                icon: Gamepad2,
-                href: "/admin/games/new",
-              },
-              {
-                label: "Platform Config",
-                icon: BarChart3,
-                href: "/admin/settings",
-              },
-              {
-                label: "Global Audit",
-                icon: ShieldAlert,
-                href: "/admin/reports",
-              },
-            ].map((action, i) => (
-              <Link key={i} href={action.href} className="block group">
-                <div className="p-8 bg-white/2 border border-white/5 rounded-[2rem] hover:bg-brand-primary hover:border-brand-primary transition-all duration-500 shadow-xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-5">
-                      <action.icon className="h-6 w-6 text-brand-primary group-hover:text-white transition-colors" />
-                      <span className="font-black uppercase tracking-widest text-white">
+          <p className="text-sm text-text-tertiary font-medium mt-2">
+            Shortcuts for the admin tasks that keep the platform ready for use.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          {systemTools.map((action) => (
+            <Link key={action.href} href={action.href} className="block group">
+              <div className="h-full p-7 bg-white/2 border border-white/5 rounded-[2rem] hover:bg-brand-primary hover:border-brand-primary transition-all duration-500 shadow-xl">
+                <div className="flex items-start justify-between gap-5">
+                  <div className="space-y-4">
+                    <action.icon className="h-6 w-6 text-brand-primary group-hover:text-white transition-colors" />
+                    <div>
+                      <div className="font-black uppercase tracking-widest text-white text-sm">
                         {action.label}
-                      </span>
+                      </div>
+                      <p className="text-xs text-text-tertiary group-hover:text-white/75 font-medium leading-relaxed mt-2">
+                        {action.description}
+                      </p>
                     </div>
-                    <span className="text-2xl text-brand-primary group-hover:text-white transition-colors">
-                      →
-                    </span>
                   </div>
+                  <ChevronRight className="h-5 w-5 text-brand-primary group-hover:text-white transition-colors shrink-0" />
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

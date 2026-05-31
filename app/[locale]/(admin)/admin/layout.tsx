@@ -10,17 +10,19 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
-  BarChart3,
   Monitor,
-  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
+import { getLocale } from "next-intl/server";
+import { getSiteSettings } from "@/lib/cms/site-settings";
 
 export default async function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const locale = await getLocale();
+  const siteSettings = await getSiteSettings(locale);
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,7 +40,7 @@ export default async function AdminLayout({
     .single();
 
   if (profile?.role !== "admin") {
-    redirect("/dashboard");
+    redirect("/player/dashboard");
   }
 
   return (
@@ -49,8 +51,8 @@ export default async function AdminLayout({
           <Link href="/" className="flex items-center gap-4 group">
             <div className="relative h-12 w-12 transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_0_15px_rgba(155,27,48,0.5)]">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="48px"
                 className="object-contain"
@@ -78,19 +80,9 @@ export default async function AdminLayout({
             { href: "/admin/games", icon: Gamepad2, label: "Game Library" },
             { href: "/admin/users", icon: Users, label: "User Management" },
             {
-              href: "/admin/reports",
-              icon: BarChart3,
-              label: "Global Reports",
-            },
-            {
               href: "/admin/platforms",
               icon: Monitor,
               label: "Platforms",
-            },
-            {
-              href: "/admin/issues",
-              icon: AlertTriangle,
-              label: "Issues",
             },
             {
               href: "/admin/settings",
@@ -142,8 +134,8 @@ export default async function AdminLayout({
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="40px"
                 className="object-contain"

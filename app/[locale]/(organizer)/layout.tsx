@@ -13,15 +13,18 @@ import {
   Settings,
 } from "lucide-react";
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getSiteSettings } from "@/lib/cms/site-settings";
 
 export default async function OrganizerLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const locale = await getLocale();
   const t = await getTranslations("Organizer");
+  const siteSettings = await getSiteSettings(locale);
   const supabase = await createClient();
   const {
     data: { user },
@@ -48,8 +51,8 @@ export default async function OrganizerLayout({
           <Link href="/" className="flex items-center gap-4 group">
             <div className="relative h-12 w-12 transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(155,27,48,0.3)]">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="48px"
                 className="object-contain"
@@ -155,8 +158,8 @@ export default async function OrganizerLayout({
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="40px"
                 className="object-contain"

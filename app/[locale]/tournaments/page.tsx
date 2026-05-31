@@ -5,6 +5,8 @@ import { Search, Trophy } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { TournamentFilters } from "@/components/TournamentFilters";
 import Image from "next/image";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export async function generateMetadata({
   params,
@@ -22,6 +24,16 @@ export default async function PublicTournamentsPage({
   searchParams: Promise<{ q?: string; game?: string; status?: string }>;
 }) {
   const t = await getTranslations("Tournaments");
+  const featureFlags = await getFeatureFlags();
+  if (!featureFlags.tournamentsEnabled) {
+    return (
+      <ModuleDisabled
+        title="Tournaments Unavailable"
+        description="The public tournament browser is currently disabled by the platform administrator."
+      />
+    );
+  }
+
   const params = await searchParams;
   const search = params.q || "";
   const gameId = params.game || "";

@@ -42,6 +42,9 @@ export async function updateSession(
   const path = request.nextUrl.pathname;
   // Ignore locale prefix if it exists e.g. /en/organizer -> /organizer
   const normalizedPath = path.replace(/^\/(en|th)/, "");
+  const locale = path.split("/")[1] || "en";
+  const isLocale = ["en", "th"].includes(locale);
+  const redirectLocale = isLocale ? `/${locale}` : "";
 
   if (
     !user &&
@@ -49,13 +52,40 @@ export async function updateSession(
       normalizedPath.startsWith("/player"))
   ) {
     // no user, potentially respond by redirecting the user to the login page
-    const locale = path.split("/")[1] || "en";
-    const isLocale = ["en", "th"].includes(locale);
-    const redirectLocale = isLocale ? `/${locale}` : "";
-
     const url = request.nextUrl.clone();
     url.pathname = `${redirectLocale}/login`;
     return NextResponse.redirect(url);
+  }
+
+  const { data: maintenanceSetting } = await supabase
+    .from("system_settings")
+    .select("value")
+    .eq("key", "maintenance_mode")
+    .maybeSingle();
+  const maintenanceEnabled = maintenanceSetting?.value === true;
+
+  if (maintenanceEnabled) {
+    const allowedDuringMaintenance =
+      normalizedPath === "/maintenance" ||
+      normalizedPath.startsWith("/login") ||
+      normalizedPath.startsWith("/admin");
+
+    let isAdmin = false;
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      isAdmin = profile?.role === "admin";
+    }
+
+    if (!isAdmin && !allowedDuringMaintenance) {
+      const url = request.nextUrl.clone();
+      url.pathname = `${redirectLocale}/maintenance`;
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

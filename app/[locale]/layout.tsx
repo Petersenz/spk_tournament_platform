@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/lib/i18n/routing";
+import { getSiteSettings } from "@/lib/cms/site-settings";
 import { Kanit, Inter } from "next/font/google";
 import "../globals.css";
 
@@ -23,17 +24,18 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
+  const siteSettings = await getSiteSettings(locale);
 
   return {
     title: {
-      template: `%s | ${t("default_title")}`,
-      default: t("default_title"),
+      template: `%s | ${siteSettings.siteName || t("default_title")}`,
+      default: siteSettings.siteName || t("default_title"),
     },
-    description: t("default_desc"),
+    description: siteSettings.tagline || t("default_desc"),
     icons: {
-      icon: "/logo.png",
-      shortcut: "/logo.png",
-      apple: "/logo.png",
+      icon: siteSettings.logoUrl,
+      shortcut: siteSettings.logoUrl,
+      apple: siteSettings.logoUrl,
     },
   };
 }

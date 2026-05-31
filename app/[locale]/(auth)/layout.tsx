@@ -1,10 +1,17 @@
 import { ReactNode } from "react";
 import { Link } from "@/lib/i18n/routing";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getSiteSettings } from "@/lib/cms/site-settings";
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
-  const t = useTranslations("Auth.layout");
+export default async function AuthLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const locale = await getLocale();
+  const t = await getTranslations("Auth.layout");
+  const siteSettings = await getSiteSettings(locale);
 
   return (
     <div className="flex min-h-screen bg-[#050505] overflow-hidden font-display">
@@ -28,8 +35,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <Link href="/" className="group">
             <div className="relative h-48 w-48 transition-all duration-700 group-hover:scale-110 drop-shadow-[0_0_50px_rgba(244,0,9,0.6)]">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="192px"
                 className="object-contain"
@@ -65,8 +72,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           {/* Mobile Logo (Shown only on small screens) */}
           <div className="lg:hidden flex justify-center mb-10">
             <Image
-              src="/logo.png"
-              alt="Logo"
+              src={siteSettings.logoUrl}
+              alt={siteSettings.siteName}
               width={80}
               height={80}
               className="object-contain"

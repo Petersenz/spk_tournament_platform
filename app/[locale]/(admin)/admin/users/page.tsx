@@ -1,8 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { Users, Shield, ShieldCheck, Calendar, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getTranslations } from "next-intl/server";
+import { ManageUserButton } from "./ManageUserButton";
+
+type ManageableRole = "admin" | "organizer" | "player";
+
+function normalizeRole(role: string | null): ManageableRole {
+  if (role === "admin" || role === "organizer" || role === "player") {
+    return role;
+  }
+
+  return "player";
+}
 
 export async function generateMetadata({
   params,
@@ -16,6 +26,9 @@ export async function generateMetadata({
 
 export default async function AdminUsersPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data: profiles } = await supabase
     .from("profiles")
     .select("*")
@@ -95,12 +108,15 @@ export default async function AdminUsersPage() {
               </div>
 
               <div className="text-right">
-                <Button
-                  variant="ghost"
-                  className="text-[10px] font-black uppercase tracking-widest text-text-tertiary hover:text-brand-primary transition-colors"
-                >
-                  Manage
-                </Button>
+                <ManageUserButton
+                  profile={{
+                    id: profile.id,
+                    nickname: profile.nickname,
+                    role: normalizeRole(profile.role),
+                    created_at: profile.created_at,
+                  }}
+                  isSelf={profile.id === user?.id}
+                />
               </div>
             </div>
           ))}

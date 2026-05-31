@@ -10,9 +10,12 @@ function Input({
   ...props
 }: React.ComponentProps<"input">) {
   const finalDefaultValue = defaultValue ?? undefined;
+  const uncontrolledKey =
+    finalDefaultValue === undefined ? undefined : String(finalDefaultValue);
 
   return (
     <InputPrimitive
+      key={uncontrolledKey}
       type={type}
       data-slot="input"
       {...(finalDefaultValue !== undefined

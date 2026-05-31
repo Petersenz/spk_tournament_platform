@@ -2,13 +2,24 @@ import { createClient } from "@/lib/supabase/server";
 import { Link } from "@/lib/i18n/routing";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "./ui/button";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LogOut, ShieldCheck, Trophy, Gamepad2 } from "lucide-react";
 import { signOut } from "@/app/[locale]/(auth)/actions";
 import Image from "next/image";
+import { getSiteSettings } from "@/lib/cms/site-settings";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
+import { getNavigationItems } from "@/lib/cms/navigation";
 
 export async function Navbar() {
+  const locale = await getLocale();
   const t = await getTranslations("Navbar");
+  const siteSettings = await getSiteSettings(locale);
+  const featureFlags = await getFeatureFlags();
+  const publicNavItems = await getNavigationItems(
+    locale,
+    "public_navbar",
+    featureFlags,
+  );
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,8 +45,8 @@ export async function Navbar() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="relative h-12 w-12 transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(155,27,48,0.6)]">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="48px"
                 className="object-contain"
@@ -44,36 +55,27 @@ export async function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-display text-[19px] font-black text-white group-hover:text-brand-primary transition-colors hidden sm:block uppercase tracking-tighter leading-tight">
-                Samutprakan
+                {siteSettings.siteNamePrimary}
               </span>
-              <span className="font-display text-xs font-bold text-brand-primary hidden sm:block uppercase tracking-[0.2em] leading-none">
-                Esports Association
-              </span>
+              {siteSettings.siteNameSecondary && (
+                <span className="font-display text-xs font-bold text-brand-primary hidden sm:block uppercase tracking-[0.2em] leading-none">
+                  {siteSettings.siteNameSecondary}
+                </span>
+              )}
             </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/tournaments"
-              className="font-display text-sm font-bold uppercase tracking-widest text-text-secondary hover:text-white transition-all relative group/link"
-            >
-              {t("tournaments")}
-              <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-brand-primary transition-all group-hover/link:w-full"></span>
-            </Link>
-            <Link
-              href="/games"
-              className="font-display text-sm font-bold uppercase tracking-widest text-text-secondary hover:text-white transition-all relative group/link"
-            >
-              {t("games")}
-              <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-brand-primary transition-all group-hover/link:w-full"></span>
-            </Link>
-            <Link
-              href="/about"
-              className="font-display text-sm font-bold uppercase tracking-widest text-text-secondary hover:text-white transition-all relative group/link"
-            >
-              {t("about")}
-              <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-brand-primary transition-all group-hover/link:w-full"></span>
-            </Link>
+            {publicNavItems.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="font-display text-sm font-bold uppercase tracking-widest text-text-secondary hover:text-white transition-all relative group/link"
+              >
+                {item.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-brand-primary transition-all group-hover/link:w-full"></span>
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -84,14 +86,24 @@ export async function Navbar() {
           {user ? (
             <div className="flex items-center gap-4">
               {role === "admin" && (
-                <Link href="/admin/dashboard" className="hidden lg:block">
-                  <Button
-                    variant="outline"
-                    className="font-display border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest text-xs px-4 h-10 border-2"
-                  >
-                    <ShieldCheck className="mr-2 h-4 w-4" /> {t("admin_cp")}
-                  </Button>
-                </Link>
+                <div className="hidden lg:flex items-center gap-2">
+                  <Link href="/admin/dashboard">
+                    <Button
+                      variant="outline"
+                      className="font-display border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest text-xs px-4 h-10 border-2"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" /> {t("admin_cp")}
+                    </Button>
+                  </Link>
+                  <Link href="/organizer/dashboard">
+                    <Button
+                      variant="outline"
+                      className="font-display border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest text-xs px-4 h-10 border-2"
+                    >
+                      <Trophy className="mr-2 h-4 w-4" /> {t("organizer_hub")}
+                    </Button>
+                  </Link>
+                </div>
               )}
 
               <div className="flex items-center gap-3">
@@ -168,11 +180,13 @@ export async function Navbar() {
                   {t("login")}
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button className="font-display bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all font-bold uppercase tracking-wide px-8">
-                  {t("signup")}
-                </Button>
-              </Link>
+              {featureFlags.publicRegistrationEnabled && (
+                <Link href="/register">
+                  <Button className="font-display bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all font-bold uppercase tracking-wide px-8">
+                    {t("signup")}
+                  </Button>
+                </Link>
+              )}
             </div>
           )}
         </div>
