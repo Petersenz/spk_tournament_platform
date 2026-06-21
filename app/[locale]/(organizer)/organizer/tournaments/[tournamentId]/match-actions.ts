@@ -7,8 +7,10 @@ export async function reportMatchScore(formData: FormData) {
   const supabase = await createClient();
   const matchId = formData.get("match_id") as string;
   const tournamentId = formData.get("tournament_id") as string;
-  const score1 = parseInt(formData.get("score1") as string);
-  const score2 = parseInt(formData.get("score2") as string);
+  const rawScore1 = parseInt(formData.get("score1") as string);
+  const rawScore2 = parseInt(formData.get("score2") as string);
+  const score1 = Number.isNaN(rawScore1) ? 0 : rawScore1;
+  const score2 = Number.isNaN(rawScore2) ? 0 : rawScore2;
 
   // 1. Fetch current match info
   const { data: match, error: fetchError } = await supabase
@@ -19,12 +21,21 @@ export async function reportMatchScore(formData: FormData) {
 
   if (fetchError || !match) return { error: "Match not found" };
 
-  // 2. Determine winner
-  let winnerId = null;
+  // Only round robin (league) records draws; elimination needs a winner to
+  // advance, so equal scores there stay an error.
+  const { data: stage } = await supabase
+    .from("stages")
+    .select("stage_type")
+    .eq("id", match.stage_id)
+    .single();
+  const allowsDraw = stage?.stage_type === "round_robin";
+
+  // 2. Determine winner (null = draw)
+  let winnerId: string | null = null;
   if (score1 > score2) winnerId = match.participant1_id;
   else if (score2 > score1) winnerId = match.participant2_id;
 
-  if (!winnerId) return { error: "Match cannot be a tie" };
+  if (!winnerId && !allowsDraw) return { error: "Match cannot be a tie" };
 
   // 3. Update current match
   const { error: updateError } = await supabase
@@ -39,26 +50,19 @@ export async function reportMatchScore(formData: FormData) {
 
   if (updateError) return { error: updateError.message };
 
-  // 4. Advance to next match if exists
-  if (match.next_match_id) {
+  // 4. Advance the winner to the next match (skipped on a draw).
+  if (winnerId && match.next_match_id) {
     const slotField =
       match.next_match_slot === 1 ? "participant1_id" : "participant2_id";
     await supabase
       .from("matches")
       .update({ [slotField]: winnerId })
       .eq("id", match.next_match_id);
-  } else {
-    // Check if this is truly the last match of the tournament (or just the stage)
-    // For now, simple logic: if no next_match_id, mark tournament as completed
-    await supabase
-      .from("tournaments")
-      .update({ status: "completed" })
-      .eq("id", tournamentId);
   }
 
   // 5. Drop the loser into the losers bracket (double elimination).
   // No-op for single elimination / round robin (next_loser_match_id is null).
-  if (match.next_loser_match_id) {
+  if (winnerId && match.next_loser_match_id) {
     const loserId =
       winnerId === match.participant1_id
         ? match.participant2_id
@@ -73,6 +77,21 @@ export async function reportMatchScore(formData: FormData) {
         .update({ [loserSlotField]: loserId })
         .eq("id", match.next_loser_match_id);
     }
+  }
+
+  // 6. Mark the tournament completed only once every match in the stage is
+  // played. (Round-robin matches have no next_match, so the old "no next match
+  // => completed" rule fired on the very first reported match.)
+  const { count: remaining } = await supabase
+    .from("matches")
+    .select("id", { count: "exact", head: true })
+    .eq("stage_id", match.stage_id)
+    .neq("status", "completed");
+  if (!remaining) {
+    await supabase
+      .from("tournaments")
+      .update({ status: "completed" })
+      .eq("id", tournamentId);
   }
 
   revalidatePath(`/organizer/tournaments/${tournamentId}`);
