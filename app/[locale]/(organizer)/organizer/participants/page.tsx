@@ -85,7 +85,7 @@ export default async function OrganizerParticipantsPage() {
                       </div>
                       <div className="text-xs text-text-tertiary font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
                         <Mail className="h-3.5 w-3.5 text-brand-primary" />{" "}
-                        {p.email || "---"}
+                        {p.main_contact_email || "---"}
                       </div>
                     </td>
                     <td className="px-10 py-8">
@@ -97,8 +97,16 @@ export default async function OrganizerParticipantsPage() {
                       </div>
                     </td>
                     <td className="px-10 py-8">
-                      <span className="text-xs px-3 py-1 rounded-full font-black uppercase tracking-widest bg-success/10 text-success border border-success/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
-                        Active
+                      <span
+                        className={`text-xs px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
+                          p.status === "approved"
+                            ? "bg-success/10 text-success border-success/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+                            : p.status === "pending"
+                              ? "bg-warning/10 text-warning border-warning/20"
+                              : "bg-white/5 text-text-tertiary border-white/10"
+                        }`}
+                      >
+                        {p.status}
                       </span>
                     </td>
                     <td className="px-10 py-8 text-right">

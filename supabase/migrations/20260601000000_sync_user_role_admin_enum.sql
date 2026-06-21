@@ -1,0 +1,12 @@
+-- Reconcile the user_role enum with production.
+--
+-- The live database already has an 'admin' value (admin accounts exist and many
+-- RLS policies compare `profiles.role = 'admin'`), but the migration history
+-- never recorded it — the enum was created as ('organizer', 'player') and the
+-- 'admin' value was added directly in the dashboard. This made the migration
+-- set non-reproducible (a fresh rebuild would fail every `role = 'admin'` policy).
+--
+-- ADD VALUE must run in its own transaction (it cannot be used in the same
+-- transaction it is created in), so this lives in a standalone migration file
+-- separate from any policy that references 'admin'. Idempotent on the live DB.
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'admin';

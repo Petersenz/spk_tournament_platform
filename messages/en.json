@@ -410,7 +410,8 @@
       "change_avatar": "Click to change avatar",
       "email_label": "Email Address (Read-only)",
       "security_section": "Role & Security",
-      "role_label": "Platform Role"
+      "role_label": "Platform Role",
+      "saved": "Profile updated"
     }
   },
   "Auth": {
