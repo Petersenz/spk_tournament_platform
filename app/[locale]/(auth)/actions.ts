@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "@/lib/i18n/routing";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
 
 // Helper to translate common Supabase errors
 function getErrorMessage(message: string) {
@@ -47,14 +48,24 @@ export async function login(formData: FormData, locale: string = "th") {
   revalidatePath("/", "layout");
 
   // Using the provided locale to ensure stable redirect
+  if (profile?.role === "admin") {
+    redirect({ href: "/admin/dashboard", locale });
+  }
+
   if (profile?.role === "organizer") {
     redirect({ href: "/organizer/dashboard", locale });
-  } else {
-    redirect({ href: "/player/dashboard", locale });
   }
+
+  redirect({ href: "/player/dashboard", locale });
 }
 
 export async function signup(formData: FormData, locale: string = "th") {
+  const featureFlags = await getFeatureFlags();
+
+  if (!featureFlags.publicRegistrationEnabled) {
+    return { error: "Public registration is currently disabled." };
+  }
+
   const supabase = await createClient();
 
   const email = formData.get("email") as string;

@@ -10,17 +10,20 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
-  BarChart3,
   Monitor,
-  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getSiteSettings } from "@/lib/cms/site-settings";
 
 export default async function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const locale = await getLocale();
+  const t = await getTranslations("Admin.layout");
+  const siteSettings = await getSiteSettings(locale);
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,7 +41,7 @@ export default async function AdminLayout({
     .single();
 
   if (profile?.role !== "admin") {
-    redirect("/dashboard");
+    redirect("/player/dashboard");
   }
 
   return (
@@ -49,8 +52,8 @@ export default async function AdminLayout({
           <Link href="/" className="flex items-center gap-4 group">
             <div className="relative h-12 w-12 transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_0_15px_rgba(155,27,48,0.5)]">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="48px"
                 className="object-contain"
@@ -59,10 +62,10 @@ export default async function AdminLayout({
             </div>
             <div className="flex flex-col">
               <span className="font-display font-black text-white uppercase tracking-tighter text-xl leading-tight">
-                ADMIN
+                {t("admin")}
               </span>
               <span className="font-display font-bold text-brand-primary uppercase tracking-[0.3em] text-[10px] leading-none">
-                CONTROL PANEL
+                {t("control_panel")}
               </span>
             </div>
           </Link>
@@ -73,29 +76,19 @@ export default async function AdminLayout({
             {
               href: "/admin/dashboard",
               icon: LayoutDashboard,
-              label: "Overview",
+              label: t("overview"),
             },
-            { href: "/admin/games", icon: Gamepad2, label: "Game Library" },
-            { href: "/admin/users", icon: Users, label: "User Management" },
-            {
-              href: "/admin/reports",
-              icon: BarChart3,
-              label: "Global Reports",
-            },
+            { href: "/admin/games", icon: Gamepad2, label: t("games") },
+            { href: "/admin/users", icon: Users, label: t("users") },
             {
               href: "/admin/platforms",
               icon: Monitor,
-              label: "Platforms",
-            },
-            {
-              href: "/admin/issues",
-              icon: AlertTriangle,
-              label: "Issues",
+              label: t("platforms"),
             },
             {
               href: "/admin/settings",
               icon: Settings,
-              label: "System Settings",
+              label: t("settings"),
             },
           ].map((item) => (
             <Link key={item.href} href={item.href}>
@@ -116,7 +109,7 @@ export default async function AdminLayout({
                 {profile.nickname}
               </div>
               <div className="text-[10px] text-brand-primary font-bold truncate uppercase tracking-[0.2em] mt-1">
-                Super Admin
+                {t("super_admin")}
               </div>
             </div>
             <form action="/api/auth/signout" method="POST">
@@ -142,15 +135,15 @@ export default async function AdminLayout({
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10">
               <Image
-                src="/logo.png"
-                alt="Logo"
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName}
                 fill
                 sizes="40px"
                 className="object-contain"
               />
             </div>
             <span className="font-display font-black uppercase tracking-tighter text-sm text-white">
-              Admin CP
+              {t("mobile_title")}
             </span>
           </div>
           <Button
@@ -158,7 +151,7 @@ export default async function AdminLayout({
             size="sm"
             className="font-black uppercase tracking-widest text-brand-primary"
           >
-            Menu
+            {t("menu")}
           </Button>
         </header>
 

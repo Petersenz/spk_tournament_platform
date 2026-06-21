@@ -9,7 +9,8 @@
     "role_admin": "ผู้ดูแลระบบ",
     "role_organizer": "ผู้จัดการแข่งขัน",
     "role_player": "นักกีฬา",
-    "admin_cp": "แผงควบคุมแอดมิน"
+    "admin_cp": "แผงควบคุมแอดมิน",
+    "organizer_hub": "จัดการแข่ง"
   },
   "NotFound": {
     "title": "ไม่พบสมรภูมินี้",
@@ -129,7 +130,8 @@
       "tournaments_subtitle": "จัดการและติดตามรายการแข่งขันทั้งหมดในโครงการของคุณ",
       "empty_tournaments_desc": "เริ่มสร้างรายการแข่งขันแรกของคุณภายในโครงการเพื่อเริ่มต้นการชิงชัย",
       "create_new": "สร้างรายการใหม่",
-      "go_to_projects": "ไปยังหน้าโครงการ"
+      "go_to_projects": "ไปยังหน้าโครงการ",
+      "admin_dashboard": "แผงควบคุมแอดมิน"
     },
     "projects": {
       "title": "โครงการของคุณ",
@@ -464,6 +466,7 @@
     "cancel": "ยกเลิก",
     "view_all": "ดูทั้งหมด",
     "manage": "จัดการ",
+    "edit": "แก้ไข",
     "delete": "ลบ",
     "back": "ย้อนกลับ",
     "round": "รอบที่",
@@ -498,7 +501,6 @@
     "admin_dashboard": "ภาพรวมระบบ",
     "admin_games": "คลังเกม",
     "admin_users": "รายชื่อผู้ใช้งาน",
-    "admin_reports": "รายงานรวม",
     "admin_settings": "ตั้งค่าระบบ",
     "player_dashboard": "แผงควบคุมผู้เล่น",
     "organizer_dashboard": "ศูนย์จัดการแข่งขัน",
@@ -544,6 +546,32 @@
     "round": "รอบที่",
     "bye": "ชนะบาย",
     "tbd": "รอผล",
+    "standings_title": "ตารางคะแนนลีก",
+    "standings_desc": "จัดอันดับตามคะแนน ตามด้วยผลต่างสกอร์",
+    "standings_rank": "อันดับ",
+    "standings_team": "ผู้เข้าแข่งขัน",
+    "standings_played": "แข่ง",
+    "standings_won": "ชนะ",
+    "standings_drawn": "เสมอ",
+    "standings_lost": "แพ้",
+    "standings_scored": "ได้",
+    "standings_conceded": "เสีย",
+    "standings_diff": "ผลต่าง",
+    "standings_points": "คะแนน",
+    "standings_played_full": "จำนวนนัดที่แข่ง",
+    "standings_won_full": "ชนะ",
+    "standings_drawn_full": "เสมอ",
+    "standings_lost_full": "แพ้",
+    "standings_scored_full": "สกอร์ที่ทำได้",
+    "standings_conceded_full": "สกอร์ที่เสีย",
+    "standings_diff_full": "ผลต่างสกอร์",
+    "standings_points_full": "คะแนนสะสม",
+    "standings_empty": "ยังไม่มีนัดที่จบ ตารางจะอัปเดตเมื่อมีผลการแข่งขัน",
+    "fixtures_title": "โปรแกรมการแข่งขันรายรอบ",
+    "league_champion": "แชมป์ลีก",
+    "de_winners": "สายชนะ",
+    "de_losers": "สายแพ้",
+    "de_grand_final": "รอบชิงชนะเลิศ",
     "realtime": "ระบบแสดงผลแบบเรียลไทม์",
     "competitors_ready": "นักแข่ง {count} ท่าน พร้อมประลอง",
     "not_configured": "ยังไม่ได้ตั้งค่ารูปแบบการแข่ง",
@@ -674,9 +702,207 @@
     "games": "คลังเกมหลัก",
     "users": "จัดการสมาชิก",
     "platforms": "แพลตฟอร์ม",
-    "reports": "รายงานสรุปผล",
-    "issues": "แจ้งปัญหา",
     "settings": "ตั้งค่าระบบ",
+    "layout": {
+      "admin": "แอดมิน",
+      "control_panel": "แผงควบคุม",
+      "overview": "ภาพรวม",
+      "games": "คลังเกม",
+      "users": "จัดการสมาชิก",
+      "platforms": "แพลตฟอร์ม",
+      "settings": "ตั้งค่าระบบ",
+      "super_admin": "ผู้ดูแลระบบ",
+      "mobile_title": "แอดมิน",
+      "menu": "เมนู"
+    },
+    "dashboard_page": {
+      "badge": "ข้อมูลระบบแบบเรียลไทม์",
+      "title": "ภาพรวมระบบ",
+      "subtitle": "สรุปสถานะสำคัญของแพลตฟอร์มและเครื่องมือสำหรับผู้ดูแลระบบ",
+      "organizer_dashboard": "หน้าจัดการแข่งขัน",
+      "tools_title": "เครื่องมือระบบ",
+      "tools_subtitle": "ทางลัดสำหรับงานหลักที่ผู้ดูแลระบบใช้งานบ่อย",
+      "stats": {
+        "users": {
+          "label": "ผู้ใช้ทั้งหมด",
+          "trend": "บัญชีในระบบ"
+        },
+        "tournaments": {
+          "label": "ทัวร์นาเมนต์ทั้งหมด",
+          "trend": "รายการแข่งขันที่สร้างแล้ว"
+        },
+        "games": {
+          "label": "คลังเกม",
+          "trend": "เกมที่รองรับ"
+        },
+        "platforms": {
+          "label": "แพลตฟอร์ม",
+          "trend": "ระบบที่รองรับ"
+        }
+      },
+      "tools": {
+        "register_game": {
+          "label": "เพิ่มเกม",
+          "description": "เพิ่มเกมใหม่เข้าสู่คลังเกมสำหรับใช้งานบนหน้าเว็บ"
+        },
+        "manage_users": {
+          "label": "จัดการสมาชิก",
+          "description": "ตรวจสอบผู้ใช้ เปลี่ยนสิทธิ์ และจัดการบัญชีที่ไม่ใช้งาน"
+        },
+        "platforms": {
+          "label": "แพลตฟอร์ม",
+          "description": "จัดการอุปกรณ์หรือระบบที่ใช้ผูกกับเกมและทัวร์นาเมนต์"
+        },
+        "settings": {
+          "label": "ตั้งค่าระบบ",
+          "description": "แก้ไขแบรนด์ เนื้อหา เมนู และการเปิดปิดโมดูลของเว็บไซต์"
+        }
+      }
+    },
+    "settings_page": {
+      "title": "ตั้งค่าระบบ",
+      "subtitle": "จัดการแบรนด์ เนื้อหา เมนู และโมดูลของแพลตฟอร์ม",
+      "cms_warning": {
+        "title": "ต้องตั้งค่าฐานข้อมูล CMS ก่อน",
+        "description": "กรุณารัน Supabase migration ล่าสุดก่อนเผยแพร่เนื้อหา เมนู การเปิดปิดโมดูล หรือการอัปโหลดโลโก้ หน้าเว็บสาธารณะจะยังใช้ข้อมูลสำรองของระบบอยู่"
+      },
+      "brand": {
+        "title": "ตั้งค่าแบรนด์",
+        "site_name_en": "ชื่อเว็บไซต์ (EN)",
+        "site_name_th": "ชื่อเว็บไซต์ (TH)",
+        "tagline_en": "คำโปรย (EN)",
+        "tagline_th": "คำโปรย (TH)",
+        "footer_text_en": "ข้อความท้ายเว็บ (EN)",
+        "footer_text_th": "ข้อความท้ายเว็บ (TH)",
+        "contact_email": "อีเมลติดต่อ",
+        "facebook_url": "ลิงก์ Facebook",
+        "discord_url": "ลิงก์ Discord"
+      },
+      "logo": {
+        "title": "โลโก้เว็บไซต์",
+        "description": "อัปโหลดโลโก้ใหม่ได้จากตรงนี้ รูปที่บันทึกจะถูกใช้ใน navbar หน้าเว็บ, sidebar แอดมิน, sidebar ผู้จัดการแข่งขัน และ metadata ของเบราว์เซอร์",
+        "upload": "อัปโหลดโลโก้เว็บไซต์",
+        "auto_save": "โลโก้จะบันทึกอัตโนมัติหลังอัปโหลดสำเร็จ",
+        "saving": "กำลังบันทึกโลโก้",
+        "success": "อัปเดตโลโก้เว็บไซต์แล้ว",
+        "error": "บันทึกโลโก้เว็บไซต์ไม่สำเร็จ",
+        "preview_title": "ตัวอย่างแบบสด",
+        "preview_description": "ตัวอย่างการแสดงผลในพื้นที่นำทางขนาดเล็ก",
+        "navbar_preview": "แถบนำทาง",
+        "navbar_preview_desc": "หน้าเว็บ + แดชบอร์ด",
+        "icon_preview": "ขนาดไอคอน",
+        "icon_preview_desc": "ตรวจความชัดเจน",
+        "preview_alt": "ตัวอย่างโลโก้เว็บไซต์",
+        "small_preview_alt": "ตัวอย่างโลโก้ขนาดเล็ก"
+      },
+      "public_content": {
+        "title": "เนื้อหาหน้าเว็บ",
+        "description": "แก้ไขชุดข้อความสำคัญพร้อมข้อมูลสำรองเพื่อความปลอดภัย",
+        "locale_note": "แก้ไขเนื้อหาภาษาอังกฤษและภาษาไทยในชุดเดียวกัน"
+      },
+      "content_labels": {
+        "home_hero": "Hero หน้าแรก",
+        "about_intro": "บทนำหน้าเกี่ยวกับเรา",
+        "partner_cta": "ส่วนติดต่อพาร์ตเนอร์"
+      },
+      "locale": {
+        "en": "อังกฤษ",
+        "th": "ไทย"
+      },
+      "fields": {
+        "title": "หัวข้อ",
+        "subtitle": "คำอธิบาย",
+        "cta_label": "ข้อความปุ่ม",
+        "cta_link": "ลิงก์ปุ่ม"
+      },
+      "navigation": {
+        "title": "เมนูนำทาง",
+        "description": "แก้ไขชื่อเมนูและการแสดงผล โดยล็อกเส้นทางไว้เพื่อความปลอดภัย",
+        "public_navbar": "Navbar หน้าเว็บ",
+        "footer": "Footer",
+        "english_label": "ป้ายชื่อภาษาอังกฤษ",
+        "thai_label": "ป้ายชื่อภาษาไทย"
+      },
+      "modules": {
+        "title": "เปิดปิดโมดูล",
+        "description": "สวิตช์เหล่านี้จะซ่อน UI สาธารณะและบล็อก action สำคัญของผู้ใช้ทั่วไป"
+      },
+      "features": {
+        "games": {
+          "title": "เกม",
+          "description": "แสดงหน้าเกมและเมนูสาธารณะที่เกี่ยวข้อง"
+        },
+        "tournaments": {
+          "title": "ทัวร์นาเมนต์",
+          "description": "แสดงหน้ารายการและรายละเอียดทัวร์นาเมนต์"
+        },
+        "about": {
+          "title": "เกี่ยวกับเรา",
+          "description": "แสดงหน้าเกี่ยวกับเราและลิงก์ในเมนู"
+        },
+        "public_registration": {
+          "title": "ลงทะเบียนสาธารณะ",
+          "description": "อนุญาตให้สมัครบัญชีและเข้าร่วมทัวร์นาเมนต์จากหน้าเว็บ"
+        },
+        "maintenance": {
+          "title": "โหมดปิดปรับปรุง",
+          "description": "แสดงหน้าปิดปรับปรุงให้ผู้ใช้ที่ไม่ใช่แอดมิน"
+        }
+      },
+      "publish": {
+        "title": "เผยแพร่การเปลี่ยนแปลง",
+        "description": "การเปลี่ยนแบรนด์ เนื้อหา เมนู และโมดูลจะมีผลกับหน้าเว็บสาธารณะหลังบันทึก หากข้อมูล CMS ไม่ครบ ระบบจะใช้ข้อมูลสำรองต่อไป",
+        "warning": "การเปิดปิดโมดูลไม่แก้ไขข้อมูลทัวร์นาเมนต์ bracket ผู้เข้าร่วม match หรือ registrations ของผู้จัดการแข่งขัน",
+        "saving": "กำลังเผยแพร่",
+        "save": "บันทึกการเปลี่ยนแปลง"
+      }
+    },
+    "users_page": {
+      "title": "จัดการสมาชิก",
+      "subtitle": "ตรวจสอบและจัดการผู้เล่น ผู้จัดการแข่งขัน และผู้ดูแลระบบทั้งหมด",
+      "search_placeholder": "ค้นหาชื่อเล่นหรืออีเมล...",
+      "table": {
+        "profile": "โปรไฟล์",
+        "role": "สิทธิ์",
+        "joined": "วันที่เข้าร่วม",
+        "action": "จัดการ"
+      },
+      "roles": {
+        "admin": "แอดมิน",
+        "organizer": "ผู้จัดการแข่งขัน",
+        "player": "ผู้เล่น"
+      }
+    },
+    "manage_user": {
+      "manage": "จัดการ",
+      "title": "จัดการสมาชิก",
+      "cancel": "ยกเลิก",
+      "saving": "กำลังบันทึก",
+      "save_role": "บันทึกสิทธิ์",
+      "role_updated": "อัปเดตสิทธิ์ผู้ใช้แล้ว",
+      "user_deleted": "ลบผู้ใช้แล้ว",
+      "user_id": "รหัสผู้ใช้",
+      "joined": "วันที่เข้าร่วม",
+      "unknown": "ไม่ทราบ",
+      "platform_role": "สิทธิ์ในระบบ",
+      "roles": {
+        "admin": "แอดมิน",
+        "organizer": "ผู้จัดการแข่งขัน",
+        "player": "ผู้เล่น"
+      },
+      "role_descriptions": {
+        "admin": "เข้าถึงการตั้งค่าระบบ เกม ผู้ใช้ และการควบคุมแพลตฟอร์มได้ทั้งหมด",
+        "organizer": "สร้างโครงการ ทัวร์นาเมนต์ ผู้เข้าร่วม และจัดการแมตช์ได้",
+        "player": "เรียกดูทัวร์นาเมนต์ สมัครเข้าร่วม และจัดการโปรไฟล์ผู้เล่นได้"
+      },
+      "self_warning": "คุณกำลังแก้ไขบัญชีของตัวเอง ระบบบล็อกการถอดสิทธิ์แอดมินของตัวเองไว้",
+      "danger_title": "โซนอันตราย",
+      "danger_description": "ลบได้เฉพาะผู้ใช้ที่ไม่มีโครงการ ทัวร์นาเมนต์ registrations participants match reports หรือประวัติ CMS ที่ผูกอยู่ การลบจะลบ Supabase Auth user และย้อนกลับไม่ได้",
+      "delete_placeholder": "พิมพ์ DELETE เพื่อยืนยัน",
+      "keep_user": "เก็บผู้ใช้นี้ไว้",
+      "deleting": "กำลังลบ",
+      "delete_user": "ลบผู้ใช้"
+    },
     "add_platform": "เพิ่มแพลตฟอร์ม",
     "edit_platform": "แก้ไขแพลตฟอร์ม",
     "delete_platform": "ลบแพลตฟอร์ม",
@@ -704,6 +930,9 @@
       "name_label": "ชื่อเกม",
       "slug_label": "สลัก (URL)",
       "category_label": "หมวดหมู่",
+      "platforms_label": "แพลตฟอร์มที่รองรับ",
+      "platforms_desc": "เลือกแพลตฟอร์มที่เกมนี้ใช้งานได้ เพื่อให้ผู้จัดเลือกตอนสร้างทัวร์นาเมนต์",
+      "platforms_empty": "ยังไม่มีแพลตฟอร์ม กรุณาเพิ่มจากหน้า Admin > Platforms ก่อน",
       "developer_label": "ผู้พัฒนา",
       "year_label": "ปีที่วางจำหน่าย",
       "description_label": "รายละเอียดเชิงลึก",

@@ -5,6 +5,8 @@ import { Navbar } from "@/components/Navbar";
 import { Trophy, Calendar, Gamepad2, Zap, ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export async function generateMetadata({
   params,
@@ -46,6 +48,17 @@ export default async function GameDetailPage({
   const decodedSlug = decodeURIComponent(slug);
   const t = await getTranslations("Games");
   const tTourney = await getTranslations("Tournaments");
+  const featureFlags = await getFeatureFlags();
+
+  if (!featureFlags.gamesEnabled) {
+    return (
+      <ModuleDisabled
+        title="Games Unavailable"
+        description="The public game library is currently disabled by the platform administrator."
+      />
+    );
+  }
+
   const supabase = await createClient();
 
   let { data: game } = await supabase

@@ -68,7 +68,7 @@ export default async function TournamentDashboardPage({
   const { data: matches } = await supabase
     .from("matches")
     .select(
-      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name)",
+      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name, group_name)",
     )
     .eq("stage_id", currentStage?.id || "")
     .order("match_number", { ascending: true });
@@ -440,6 +440,7 @@ export default async function TournamentDashboardPage({
               initialMatches={matches || []}
               tournamentId={tournamentId}
               isOrganizer={true}
+              stageType={currentStage?.stage_type}
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-40 text-center border border-white/5 bg-white/2 rounded-[3rem] backdrop-blur-sm border-dashed">

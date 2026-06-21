@@ -1,6 +1,10 @@
 import { Navbar } from "@/components/Navbar";
 import { Shield, Users, Trophy, Heart } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getContentBlocks } from "@/lib/cms/content-blocks";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
+import { getSiteSettings } from "@/lib/cms/site-settings";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export async function generateMetadata({
   params,
@@ -13,7 +17,37 @@ export async function generateMetadata({
 }
 
 export default async function AboutPage() {
+  const locale = await getLocale();
   const t = await getTranslations("About");
+  const featureFlags = await getFeatureFlags();
+
+  if (!featureFlags.aboutEnabled) {
+    return (
+      <ModuleDisabled
+        title="About Page Unavailable"
+        description="This public section is currently disabled by the platform administrator."
+      />
+    );
+  }
+
+  const siteSettings = await getSiteSettings(locale);
+  const contentBlocks = await getContentBlocks(locale, {
+    home_hero: {},
+    about_intro: {
+      title: t("title"),
+      subtitle: t("description"),
+    },
+    partner_cta: {
+      title: t("partner.title"),
+      subtitle: t("partner.description"),
+      ctaLabel: "Contact",
+      ctaHref: siteSettings.contactEmail
+        ? `mailto:${siteSettings.contactEmail}`
+        : "mailto:contact@spk-tournaments.com",
+    },
+  });
+  const aboutIntro = contentBlocks.about_intro;
+  const partnerCta = contentBlocks.partner_cta;
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
@@ -21,10 +55,10 @@ export default async function AboutPage() {
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-24 space-y-32">
         <section className="text-center space-y-8 animate-in fade-in duration-1000">
           <h1 className="font-display text-5xl md:text-7xl font-black uppercase tracking-tighter text-white drop-shadow-[0_0_20px_rgba(244,0,9,0.3)]">
-            {t("title")}
+            {aboutIntro.title}
           </h1>
           <p className="text-xl text-text-secondary leading-relaxed max-w-3xl mx-auto font-medium">
-            {t("description")}
+            {aboutIntro.subtitle}
           </p>
         </section>
 
@@ -75,14 +109,19 @@ export default async function AboutPage() {
           <div className="absolute bottom-0 left-0 h-40 w-40 bg-black/20 rounded-full -ml-20 -mb-20 blur-3xl"></div>
 
           <h2 className="font-display text-4xl md:text-5xl font-black uppercase tracking-tighter relative z-10">
-            {t("partner.title")}
+            {partnerCta.title}
           </h2>
           <p className="text-white/80 max-w-2xl mx-auto text-lg font-medium relative z-10">
-            {t("partner.description")}
+            {partnerCta.subtitle}
           </p>
-          <div className="font-black text-2xl md:text-3xl tracking-tighter bg-white/10 inline-block px-8 py-4 rounded-2xl border border-white/20 relative z-10">
-            contact@spk-tournaments.com
-          </div>
+          {partnerCta.ctaHref && (
+            <a
+              href={partnerCta.ctaHref}
+              className="font-black text-2xl md:text-3xl tracking-tighter bg-white/10 inline-block px-8 py-4 rounded-2xl border border-white/20 relative z-10 transition-all hover:bg-white hover:text-brand-primary"
+            >
+              {siteSettings.contactEmail || partnerCta.ctaLabel}
+            </a>
+          )}
         </section>
       </main>
     </div>

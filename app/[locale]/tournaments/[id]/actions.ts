@@ -2,8 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
 
 export async function joinTournament(tournamentId: string, teamName?: string) {
+  const featureFlags = await getFeatureFlags();
+
+  if (!featureFlags.publicRegistrationEnabled) {
+    return { error: "Public registration is currently disabled." };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

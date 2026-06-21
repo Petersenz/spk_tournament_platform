@@ -4,6 +4,8 @@ import { Link } from "@/lib/i18n/routing";
 import { Gamepad2, Zap } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export async function generateMetadata({
   params,
@@ -17,6 +19,17 @@ export async function generateMetadata({
 
 export default async function GamesPage() {
   const t = await getTranslations("Games");
+  const featureFlags = await getFeatureFlags();
+
+  if (!featureFlags.gamesEnabled) {
+    return (
+      <ModuleDisabled
+        title="Games Unavailable"
+        description="The public game library is currently disabled by the platform administrator."
+      />
+    );
+  }
+
   const supabase = await createClient();
 
   // Fetch games with their tournament count

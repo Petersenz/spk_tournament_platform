@@ -13,9 +13,11 @@ import { useTranslations } from "next-intl";
 export function JoinButton({
   tournamentId,
   participantType,
+  registrationEnabled = true,
 }: {
   tournamentId: string;
   participantType: "player" | "team";
+  registrationEnabled?: boolean;
 }) {
   const t = useTranslations("Tournament");
   const tCommon = useTranslations("Common");
@@ -27,6 +29,12 @@ export function JoinButton({
   const router = useRouter();
 
   async function handleJoin() {
+    if (!registrationEnabled) {
+      setStatus("error");
+      setMessage("Public registration is currently disabled.");
+      return;
+    }
+
     if (participantType === "team" && !teamName.trim()) {
       setStatus("error");
       setMessage("Please enter a team name");
@@ -75,6 +83,7 @@ export function JoinButton({
     <>
       <Button
         onClick={() => setShowModal(true)}
+        disabled={!registrationEnabled}
         className="w-full bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(244,0,9,0.5)] transition-all py-8 font-display font-black text-xl uppercase tracking-tighter rounded-2xl"
       >
         {t("join_arena")}

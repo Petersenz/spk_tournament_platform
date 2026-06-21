@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Link } from "@/lib/i18n/routing";
-import { Trophy, Folder, Users, Swords, Plus } from "lucide-react";
+import { Trophy, Folder, Users, Swords, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
 
@@ -21,6 +21,12 @@ export default async function OrganizerDashboard() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id)
+    .single();
+  const isAdmin = profile?.role === "admin";
 
   // Fetch Stats
   const { count: projectCount } = await supabase
@@ -61,11 +67,24 @@ export default async function OrganizerDashboard() {
             {t("subtitle")}
           </p>
         </div>
-        <Link href="/organizer/projects/new">
-          <Button className="bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all font-bold uppercase tracking-widest px-8">
-            <Plus className="mr-2 h-4 w-4" /> {common("manage")}
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {isAdmin && (
+            <Link href="/admin/dashboard">
+              <Button
+                variant="outline"
+                className="border-brand-primary/50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all font-bold uppercase tracking-widest px-6"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                {t("admin_dashboard")}
+              </Button>
+            </Link>
+          )}
+          <Link href="/organizer/projects/new">
+            <Button className="bg-brand-primary text-white hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all font-bold uppercase tracking-widest px-8">
+              <Plus className="mr-2 h-4 w-4" /> {common("manage")}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* STATS CARDS */}

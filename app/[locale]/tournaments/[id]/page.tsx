@@ -21,6 +21,8 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { cn } from "@/lib/utils";
 import { ParticipantListTable } from "@/components/tournament/ParticipantListTable";
+import { getFeatureFlags } from "@/lib/cms/feature-flags";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export async function generateMetadata({
   params,
@@ -47,6 +49,17 @@ export default async function PublicTournamentDetailPage({
 }) {
   const t = await getTranslations("Tournament");
   const { id, locale } = await params;
+  const featureFlags = await getFeatureFlags();
+
+  if (!featureFlags.tournamentsEnabled) {
+    return (
+      <ModuleDisabled
+        title="Tournaments Unavailable"
+        description="The public tournament pages are currently disabled by the platform administrator."
+      />
+    );
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -76,7 +89,7 @@ export default async function PublicTournamentDetailPage({
   const { data: matches } = await supabase
     .from("matches")
     .select(
-      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name)",
+      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name, group_name)",
     )
     .eq("stage_id", currentStage?.id || "")
     .order("match_number", { ascending: true });
@@ -255,6 +268,7 @@ export default async function PublicTournamentDetailPage({
                   initialMatches={matches || []}
                   tournamentId={id}
                   isOrganizer={false}
+                  stageType={currentStage?.stage_type}
                 />
               </div>
             </section>
@@ -338,17 +352,29 @@ export default async function PublicTournamentDetailPage({
                       />
                     </div>
                   ) : tournament.status === "registration_open" ? (
-                    user ? (
-                      <JoinButton
-                        tournamentId={id}
-                        participantType={tournament.participant_type}
-                      />
+                    featureFlags.publicRegistrationEnabled ? (
+                      user ? (
+                        <JoinButton
+                          tournamentId={id}
+                          participantType={tournament.participant_type}
+                          registrationEnabled={
+                            featureFlags.publicRegistrationEnabled
+                          }
+                        />
+                      ) : (
+                        <Link href="/login">
+                          <Button className="w-full bg-white text-black hover:bg-brand-primary hover:text-white transition-all py-8 font-display font-black text-xl uppercase tracking-tighter rounded-2xl shadow-xl">
+                            {t("login_to_join")}
+                          </Button>
+                        </Link>
+                      )
                     ) : (
-                      <Link href="/login">
-                        <Button className="w-full bg-white text-black hover:bg-brand-primary hover:text-white transition-all py-8 font-display font-black text-xl uppercase tracking-tighter rounded-2xl shadow-xl">
-                          {t("login_to_join")}
-                        </Button>
-                      </Link>
+                      <Button
+                        disabled
+                        className="w-full bg-white/5 text-text-disabled py-8 font-display font-black text-xl uppercase tracking-tighter rounded-2xl cursor-not-allowed border border-white/5"
+                      >
+                        Registration Disabled
+                      </Button>
                     )
                   ) : (
                     <Button

@@ -9,13 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Gamepad2,
   Upload,
   CheckCircle2,
@@ -25,7 +18,7 @@ import {
   ShieldCheck,
   Calendar,
   Building2,
-  Tags,
+  Monitor,
 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -35,7 +28,6 @@ interface Game {
   id?: string;
   name?: string;
   slug?: string;
-  category?: string;
   developer?: string;
   release_year?: number;
   description?: string;
@@ -44,12 +36,25 @@ interface Game {
   cover_url?: string;
 }
 
+interface Platform {
+  id: string;
+  name: string;
+  icon_url?: string | null;
+}
+
 interface GameFormProps {
   initialData?: Game;
   id?: string;
+  platforms?: Platform[];
+  selectedPlatformIds?: string[];
 }
 
-export function GameForm({ initialData, id }: GameFormProps) {
+export function GameForm({
+  initialData,
+  id,
+  platforms = [],
+  selectedPlatformIds = [],
+}: GameFormProps) {
   const t = useTranslations("Admin.game_form");
   const router = useRouter();
   const supabase = createClient();
@@ -159,28 +164,7 @@ export function GameForm({ initialData, id }: GameFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary flex items-center gap-2">
-                <Tags className="h-3 w-3" /> {t("category_label")}
-              </Label>
-              <Select
-                name="category"
-                defaultValue={initialData?.category || "moba"}
-              >
-                <SelectTrigger className="bg-white/5 border-white/10 h-14 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-bg-secondary border-white/10">
-                  <SelectItem value="moba">{t("cat_moba")}</SelectItem>
-                  <SelectItem value="fps">{t("cat_fps")}</SelectItem>
-                  <SelectItem value="sports">{t("cat_sports")}</SelectItem>
-                  <SelectItem value="fighting">{t("cat_fighting")}</SelectItem>
-                  <SelectItem value="rts">{t("cat_rts")}</SelectItem>
-                  <SelectItem value="other">{t("cat_other")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary flex items-center gap-2">
                 <Building2 className="h-3 w-3" /> {t("developer_label")}
@@ -202,6 +186,43 @@ export function GameForm({ initialData, id }: GameFormProps) {
                 className="bg-white/5 border-white/10 h-14 rounded-xl text-white font-bold"
               />
             </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-tertiary flex items-center gap-2">
+                <Monitor className="h-3 w-3" /> {t("platforms_label")}
+              </Label>
+              <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-text-tertiary">
+                {t("platforms_desc")}
+              </p>
+            </div>
+
+            {platforms.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {platforms.map((platform) => (
+                  <label
+                    key={platform.id}
+                    className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 transition-all hover:border-brand-primary/50 hover:bg-white/[0.05]"
+                  >
+                    <input
+                      type="checkbox"
+                      name="platforms"
+                      value={platform.id}
+                      defaultChecked={selectedPlatformIds.includes(platform.id)}
+                      className="h-4 w-4 accent-brand-primary"
+                    />
+                    <span className="text-xs font-black uppercase tracking-widest text-text-secondary">
+                      {platform.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4 text-[10px] font-black uppercase tracking-widest text-warning">
+                {t("platforms_empty")}
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">

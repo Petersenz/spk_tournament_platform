@@ -19,6 +19,14 @@ export default async function EditGamePage({
     .select("*")
     .eq("id", id)
     .single();
+  const { data: platforms } = await supabase
+    .from("platforms")
+    .select("id, name, icon_url")
+    .order("name");
+  const { data: gamePlatforms } = await supabase
+    .from("game_platforms")
+    .select("platform_id")
+    .eq("game_id", id);
 
   if (!game) {
     notFound();
@@ -41,7 +49,14 @@ export default async function EditGamePage({
         </p>
       </div>
 
-      <GameForm initialData={game} id={id} />
+      <GameForm
+        initialData={game}
+        id={id}
+        platforms={platforms || []}
+        selectedPlatformIds={
+          gamePlatforms?.map((item) => item.platform_id) || []
+        }
+      />
     </div>
   );
 }
