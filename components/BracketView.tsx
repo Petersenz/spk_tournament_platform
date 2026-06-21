@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Save,
@@ -18,6 +18,7 @@ import {
   RotateCcw,
   ArrowUpDown,
   Loader2,
+  ListOrdered,
 } from "lucide-react";
 import {
   reportMatchScore,
@@ -30,6 +31,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/lib/i18n/routing";
 import Image from "next/image";
 import { appToast } from "@/lib/app-toast";
+import { computeStandings } from "@/lib/bracket-engine/standings";
 
 function SaveButton({ disabled }: { disabled?: boolean }) {
   const t = useTranslations("Tournament");
@@ -52,6 +54,27 @@ function SaveButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
+// Compact submit used by the round-robin fixture list (one button per row)
+function CompactSaveButton() {
+  const t = useTranslations("Tournament");
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-label={t("confirm_results")}
+      title={t("confirm_results")}
+      className="h-9 px-3 rounded-lg bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white border border-brand-primary/20 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+    >
+      {pending ? (
+        <div className="h-3.5 w-3.5 border-2 border-current border-t-transparent animate-spin rounded-full" />
+      ) : (
+        <Save className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
+}
+
 export interface Match {
   id: string;
   stage_id: string;
@@ -66,7 +89,7 @@ export interface Match {
   location?: string | null;
   p1?: { name: string; logo_url?: string | null };
   p2?: { name: string; logo_url?: string | null };
-  rounds?: { number: number; name: string };
+  rounds?: { number: number; name: string; group_name?: string | null };
   next_match_id?: string | null;
   next_match_slot?: number | null;
 }
@@ -75,14 +98,25 @@ export function BracketView({
   initialMatches,
   tournamentId,
   isOrganizer = false,
+  stageType,
 }: {
   initialMatches: Match[];
   tournamentId: string;
   isOrganizer?: boolean;
+  stageType?: string | null;
 }) {
   const t = useTranslations("Tournament");
   const router = useRouter();
+  // Round-robin (league) stages render as a standings table + flat fixtures
+  // list rather than an elimination bracket with advancement connectors.
+  const isRoundRobin = stageType === "round_robin";
+  // Double elimination renders the two brackets + grand final as switchable
+  // sections (Winners / Losers / Grand Final), each as flat round columns.
+  const isDoubleElim = stageType === "double_elimination";
   const [matches, setMatches] = useState(initialMatches);
+  const [bracketSection, setBracketSection] = useState<
+    "winners" | "losers" | "grand_final"
+  >("winners");
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const supabase = createClient();
 
@@ -224,7 +258,13 @@ export function BracketView({
     const m = matches.find((match) => match.id === matchId);
     const teamName = field === "participant1_id" ? m?.p1?.name : m?.p2?.name;
 
-    if (isOrganizer && roundNumber === 1 && m?.status !== "completed") {
+    if (
+      isOrganizer &&
+      !isRoundRobin &&
+      !isDoubleElim &&
+      roundNumber === 1 &&
+      m?.status !== "completed"
+    ) {
       setMatchSwapCandidate(null);
       setMatchSwapState(null);
 
@@ -285,6 +325,8 @@ export function BracketView({
 
     if (
       !isOrganizer ||
+      isRoundRobin ||
+      isDoubleElim ||
       match.rounds?.number !== 1 ||
       match.status === "completed"
     ) {
@@ -452,32 +494,71 @@ export function BracketView({
     (a, b) => Number(a) - Number(b),
   );
 
+  // Double elimination: map each round to its bracket section and expose the
+  // sections present so we can render Winners / Losers / Grand Final tabs.
+  const groupOfRound: Record<string, string> = {};
+  matches.forEach((m) => {
+    const rn = (m.rounds?.number || 999).toString();
+    if (m.rounds?.group_name) groupOfRound[rn] = m.rounds.group_name;
+  });
+  const deSections = (["winners", "losers", "grand_final"] as const).filter(
+    (g) => roundNumbers.some((rn) => groupOfRound[rn] === g),
+  );
+  const effectiveSection = deSections.includes(bracketSection)
+    ? bracketSection
+    : (deSections[0] ?? "winners");
+  const visibleRoundNumbers = isDoubleElim
+    ? roundNumbers.filter((rn) => groupOfRound[rn] === effectiveSection)
+    : selectedRound
+      ? [selectedRound]
+      : roundNumbers;
+
+  // League table — only meaningful for round-robin, but cheap to keep memoized.
+  const standings = useMemo(() => computeStandings(matches), [matches]);
+  const leagueComplete =
+    isRoundRobin &&
+    matches.length > 0 &&
+    matches.every((m) => m.status === "completed");
+
   // PODIUM LOGIC
-  const finalRoundNum = roundNumbers[roundNumbers.length - 1];
-  const finalMatch = roundsMap[finalRoundNum]?.matches?.[0];
-  const isFinished = finalMatch?.status === "completed";
+  let isFinished: boolean;
+  let firstPlace: { name: string; logo_url?: string | null } | null;
+  let secondPlace: { name: string; logo_url?: string | null } | null;
+  let displayedThirdPlaces: { name: string; logo_url?: string | null }[];
 
-  const firstPlace = isFinished
-    ? finalMatch.winner_id === finalMatch.participant1_id
-      ? finalMatch.p1
-      : finalMatch.p2
-    : null;
-  const secondPlace = isFinished
-    ? finalMatch.winner_id === finalMatch.participant1_id
-      ? finalMatch.p2
-      : finalMatch.p1
-    : null;
+  if (isRoundRobin) {
+    // League winners come from the final standings, not a single final match.
+    isFinished = leagueComplete;
+    firstPlace = isFinished ? (standings[0] ?? null) : null;
+    secondPlace = isFinished ? (standings[1] ?? null) : null;
+    displayedThirdPlaces = isFinished && standings[2] ? [standings[2]] : [];
+  } else {
+    const finalRoundNum = roundNumbers[roundNumbers.length - 1];
+    const finalMatch = roundsMap[finalRoundNum]?.matches?.[0];
+    isFinished = finalMatch?.status === "completed";
 
-  // Find 3rd place (losers of semi-finals)
-  const semiFinalRoundNum = roundNumbers[roundNumbers.length - 2];
-  const semiFinalMatches = roundsMap[semiFinalRoundNum]?.matches || [];
-  const thirdPlaces = semiFinalMatches
-    .filter((m: Match) => m.status === "completed")
-    .map((m: Match) => {
-      return m.winner_id === m.participant1_id ? m.p2 : m.p1;
-    })
-    .filter((p): p is { name: string; logo_url?: string | null } => !!p);
-  const displayedThirdPlaces = thirdPlaces.slice(0, 2);
+    firstPlace = isFinished
+      ? finalMatch.winner_id === finalMatch.participant1_id
+        ? (finalMatch.p1 ?? null)
+        : (finalMatch.p2 ?? null)
+      : null;
+    secondPlace = isFinished
+      ? finalMatch.winner_id === finalMatch.participant1_id
+        ? (finalMatch.p2 ?? null)
+        : (finalMatch.p1 ?? null)
+      : null;
+
+    // Find 3rd place (losers of semi-finals)
+    const semiFinalRoundNum = roundNumbers[roundNumbers.length - 2];
+    const semiFinalMatches = roundsMap[semiFinalRoundNum]?.matches || [];
+    displayedThirdPlaces = semiFinalMatches
+      .filter((m: Match) => m.status === "completed")
+      .map((m: Match) => {
+        return m.winner_id === m.participant1_id ? m.p2 : m.p1;
+      })
+      .filter((p): p is { name: string; logo_url?: string | null } => !!p)
+      .slice(0, 2);
+  }
 
   if (roundNumbers.length === 0) {
     return (
@@ -598,129 +679,327 @@ export function BracketView({
         </div>
       )}
 
-      {/* ROUND SELECTOR TABS */}
-      <div className="flex flex-wrap gap-2 justify-center mb-8 border-b border-white/5 pb-6">
-        <button
-          onClick={() => setSelectedRound(null)}
-          className={`px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all border ${
-            selectedRound === null
-              ? "bg-brand-primary border-brand-primary text-white shadow-[0_0_15px_rgba(244,0,9,0.3)]"
-              : "bg-white/5 border-white/10 text-text-tertiary hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          {t("all_rounds") || "All Rounds"}
-        </button>
-        {roundNumbers.map((roundNum) => (
+      {/* LEAGUE STANDINGS TABLE (round-robin only) */}
+      {isRoundRobin && (
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-2xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary">
+              <ListOrdered className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-2xl font-black uppercase tracking-tight text-white">
+                {t("standings_title")}
+              </h3>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-text-tertiary mt-0.5">
+                {t("standings_desc")}
+              </p>
+            </div>
+          </div>
+
+          {standings.length === 0 ? (
+            <div className="w-full py-12 text-center border-2 border-dashed border-white/5 rounded-[2rem] bg-white/2">
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-text-tertiary">
+                {t("standings_empty")}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-[#0c0c0e] shadow-xl">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="text-[10px] font-black uppercase tracking-widest text-text-tertiary border-b border-white/10">
+                    <th className="py-4 pl-6 pr-2 text-left w-12">
+                      {t("standings_rank")}
+                    </th>
+                    <th className="py-4 px-2 text-left">
+                      {t("standings_team")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-12"
+                      title={t("standings_played_full")}
+                    >
+                      {t("standings_played")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-12"
+                      title={t("standings_won_full")}
+                    >
+                      {t("standings_won")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-12"
+                      title={t("standings_drawn_full")}
+                    >
+                      {t("standings_drawn")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-12"
+                      title={t("standings_lost_full")}
+                    >
+                      {t("standings_lost")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-14 hidden sm:table-cell"
+                      title={t("standings_scored_full")}
+                    >
+                      {t("standings_scored")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-14 hidden sm:table-cell"
+                      title={t("standings_conceded_full")}
+                    >
+                      {t("standings_conceded")}
+                    </th>
+                    <th
+                      className="py-4 px-2 text-center w-14"
+                      title={t("standings_diff_full")}
+                    >
+                      {t("standings_diff")}
+                    </th>
+                    <th
+                      className="py-4 pl-2 pr-6 text-center w-16"
+                      title={t("standings_points_full")}
+                    >
+                      {t("standings_points")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {standings.map((row, idx) => {
+                    const isLeader = idx === 0;
+                    return (
+                      <tr
+                        key={row.id}
+                        onClick={() =>
+                          setTrackedTeamId((prev) =>
+                            prev === row.id ? null : row.id,
+                          )
+                        }
+                        className={`border-b border-white/5 last:border-0 cursor-pointer transition-colors ${
+                          trackedTeamId === row.id
+                            ? "bg-brand-primary/15"
+                            : "hover:bg-white/5"
+                        }`}
+                      >
+                        <td className="py-3 pl-6 pr-2">
+                          <span
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black ${
+                              isLeader
+                                ? "bg-[#FFD700]/15 text-[#FFD700] border border-[#FFD700]/30"
+                                : "bg-white/5 text-text-tertiary"
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="relative h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                              {row.logo_url ? (
+                                <Image
+                                  src={row.logo_url}
+                                  alt={row.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <span className="text-[10px] font-black text-white/40">
+                                  {row.name?.[0]?.toUpperCase() || "?"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="truncate font-bold uppercase tracking-tight text-white text-xs md:text-sm">
+                              {row.name}
+                            </span>
+                            {leagueComplete && isLeader && (
+                              <Crown className="h-3.5 w-3.5 text-[#FFD700] shrink-0" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-text-tertiary">
+                          {row.played}
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-success">
+                          {row.won}
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-text-tertiary">
+                          {row.drawn}
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-brand-primary/80">
+                          {row.lost}
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-text-tertiary hidden sm:table-cell">
+                          {row.scored}
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-text-tertiary hidden sm:table-cell">
+                          {row.conceded}
+                        </td>
+                        <td className="py-3 px-2 text-center font-bold text-white/80">
+                          {row.diff > 0 ? `+${row.diff}` : row.diff}
+                        </td>
+                        <td className="py-3 pl-2 pr-6 text-center">
+                          <span className="font-black text-lg text-white">
+                            {row.points}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-10 mb-2 flex items-center gap-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-primary animate-pulse"></span>
+            <h3 className="font-display text-lg font-black uppercase tracking-tight text-white">
+              {t("fixtures_title")}
+            </h3>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION / ROUND SELECTOR TABS */}
+      {isDoubleElim ? (
+        // Double elimination: switch between Winners / Losers / Grand Final
+        <div className="flex flex-wrap gap-2 justify-center mb-8 border-b border-white/5 pb-6">
+          {deSections.map((sec) => (
+            <button
+              key={sec}
+              onClick={() => setBracketSection(sec)}
+              className={`px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all border ${
+                effectiveSection === sec
+                  ? "bg-brand-primary border-brand-primary text-white shadow-[0_0_15px_rgba(244,0,9,0.3)]"
+                  : "bg-white/5 border-white/10 text-text-tertiary hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {t(`de_${sec}`)}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2 justify-center mb-8 border-b border-white/5 pb-6">
           <button
-            key={roundNum}
-            onClick={() => setSelectedRound(roundNum)}
+            onClick={() => setSelectedRound(null)}
             className={`px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all border ${
-              selectedRound === roundNum
+              selectedRound === null
                 ? "bg-brand-primary border-brand-primary text-white shadow-[0_0_15px_rgba(244,0,9,0.3)]"
                 : "bg-white/5 border-white/10 text-text-tertiary hover:bg-white/10 hover:text-white"
             }`}
           >
-            {roundsMap[roundNum].name}
+            {t("all_rounds") || "All Rounds"}
           </button>
-        ))}
-      </div>
-
-      {/* INTERACTIVE WORKSPACE VIEWPORT */}
-      <div
-        ref={containerRef}
-        className={`relative w-full border border-white/5 rounded-[2.5rem] bg-[#060608]/90 overflow-hidden select-none shadow-inner group/workspace ${
-          isFullscreen
-            ? "fixed inset-0 z-50 p-6 md:p-12 w-screen h-screen bg-[#060608]"
-            : "h-[650px]"
-        }`}
-        style={{
-          cursor: isDragging ? "grabbing" : "grab",
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Floating controls in top right */}
-        <div className="absolute top-6 right-6 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl shadow-2xl">
-          <button
-            type="button"
-            onClick={zoomIn}
-            className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
-            title="Zoom In"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={zoomOut}
-            className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
-            title="Zoom Out"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={resetView}
-            className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
-            title="Reset View"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </button>
-          <div className="w-[1px] h-6 bg-white/10 mx-1"></div>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
-            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-          >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
-            )}
-          </button>
+          {roundNumbers.map((roundNum) => (
+            <button
+              key={roundNum}
+              onClick={() => setSelectedRound(roundNum)}
+              className={`px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all border ${
+                selectedRound === roundNum
+                  ? "bg-brand-primary border-brand-primary text-white shadow-[0_0_15px_rgba(244,0,9,0.3)]"
+                  : "bg-white/5 border-white/10 text-text-tertiary hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {roundsMap[roundNum].name}
+            </button>
+          ))}
         </div>
+      )}
 
-        {/* Floating Zoom and Tracked Team Indicators in bottom-left */}
-        <div className="absolute bottom-6 left-6 z-30 flex items-center gap-3">
-          <div className="px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-[10px] font-black text-text-tertiary uppercase tracking-widest pointer-events-none">
-            Zoom: {Math.round(zoom * 100)}%
-          </div>
-          {trackedTeamId && (
+      {/* INTERACTIVE WORKSPACE VIEWPORT (elimination brackets only) */}
+      {!isRoundRobin && (
+        <div
+          ref={containerRef}
+          className={`relative w-full border border-white/5 rounded-[2.5rem] bg-[#060608]/90 overflow-hidden select-none shadow-inner group/workspace ${
+            isFullscreen
+              ? "fixed inset-0 z-50 p-6 md:p-12 w-screen h-screen bg-[#060608]"
+              : "h-[650px]"
+          }`}
+          style={{
+            cursor: isDragging ? "grabbing" : "grab",
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Floating controls in top right */}
+          <div className="absolute top-6 right-6 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl shadow-2xl">
             <button
               type="button"
-              onClick={() => setTrackedTeamId(null)}
-              className="px-3 py-1.5 bg-brand-primary/20 hover:bg-brand-primary text-white border border-brand-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+              onClick={zoomIn}
+              className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
+              title="Zoom In"
             >
-              <span>
-                Tracking:{" "}
-                {matches.find((m) => m.participant1_id === trackedTeamId)?.p1
-                  ?.name ||
-                  matches.find((m) => m.participant2_id === trackedTeamId)?.p2
-                    ?.name ||
-                  "Team"}
-              </span>
-              <span className="text-white/60">✕</span>
+              <ZoomIn className="h-4 w-4" />
             </button>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={zoomOut}
+              className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
+              title="Zoom Out"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={resetView}
+              className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
+              title="Reset View"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <div className="w-[1px] h-6 bg-white/10 mx-1"></div>
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="h-10 w-10 rounded-xl bg-white/5 hover:bg-brand-primary hover:text-white border border-white/5 text-text-tertiary flex items-center justify-center transition-all"
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </button>
+          </div>
 
-        {/* PANNABLE CANVAS CONTAINER */}
-        <div
-          className="absolute inset-0 p-12 transition-transform duration-75 ease-out flex items-center justify-start min-w-max h-full"
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: "center center",
-          }}
-        >
-          {/* HORIZONTAL BRACKET */}
-          <div className="flex gap-16 md:gap-32 pb-10 min-w-max px-4">
-            {(selectedRound ? [selectedRound] : roundNumbers).map(
-              (roundNum, index) => (
+          {/* Floating Zoom and Tracked Team Indicators in bottom-left */}
+          <div className="absolute bottom-6 left-6 z-30 flex items-center gap-3">
+            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-[10px] font-black text-text-tertiary uppercase tracking-widest pointer-events-none">
+              Zoom: {Math.round(zoom * 100)}%
+            </div>
+            {trackedTeamId && (
+              <button
+                type="button"
+                onClick={() => setTrackedTeamId(null)}
+                className="px-3 py-1.5 bg-brand-primary/20 hover:bg-brand-primary text-white border border-brand-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+              >
+                <span>
+                  Tracking:{" "}
+                  {matches.find((m) => m.participant1_id === trackedTeamId)?.p1
+                    ?.name ||
+                    matches.find((m) => m.participant2_id === trackedTeamId)?.p2
+                      ?.name ||
+                    "Team"}
+                </span>
+                <span className="text-white/60">✕</span>
+              </button>
+            )}
+          </div>
+
+          {/* PANNABLE CANVAS CONTAINER */}
+          <div
+            className="absolute inset-0 p-12 transition-transform duration-75 ease-out flex items-center justify-start min-w-max h-full"
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: "center center",
+            }}
+          >
+            {/* HORIZONTAL BRACKET */}
+            <div className="flex gap-16 md:gap-32 pb-10 min-w-max px-4">
+              {visibleRoundNumbers.map((roundNum, index) => (
                 <div
                   key={roundNum}
                   className="flex-shrink-0 w-[300px] relative"
@@ -736,11 +1015,23 @@ export function BracketView({
                   <div
                     className="flex flex-col relative w-full"
                     style={{
-                      paddingTop: `${(Math.pow(2, index) - 1) * (CARD_HEIGHT / 2 + BASE_GAP / 2)}px`,
-                      gap: `${(Math.pow(2, index) - 1) * CARD_HEIGHT + Math.pow(2, index) * BASE_GAP}px`,
+                      // Single-elim rounds fan out exponentially so connectors
+                      // meet at midpoints; league and double-elim sections use a
+                      // flat, even column instead.
+                      paddingTop:
+                        isRoundRobin || isDoubleElim
+                          ? 0
+                          : `${(Math.pow(2, index) - 1) * (CARD_HEIGHT / 2 + BASE_GAP / 2)}px`,
+                      gap:
+                        isRoundRobin || isDoubleElim
+                          ? `${BASE_GAP}px`
+                          : `${(Math.pow(2, index) - 1) * CARD_HEIGHT + Math.pow(2, index) * BASE_GAP}px`,
                       // Store the exact gap value in a CSS variable for precise connector drawing
                       ...({
-                        "--gap": `${(Math.pow(2, index) - 1) * CARD_HEIGHT + Math.pow(2, index) * BASE_GAP}px`,
+                        "--gap":
+                          isRoundRobin || isDoubleElim
+                            ? `${BASE_GAP}px`
+                            : `${(Math.pow(2, index) - 1) * CARD_HEIGHT + Math.pow(2, index) * BASE_GAP}px`,
                       } as React.CSSProperties),
                     }}
                   >
@@ -762,6 +1053,8 @@ export function BracketView({
                             matchSwapState?.matchId2 === match.id;
                           const canSwapWholeMatch =
                             isOrganizer &&
+                            !isRoundRobin &&
+                            !isDoubleElim &&
                             match.rounds?.number === 1 &&
                             match.status !== "completed";
 
@@ -1032,7 +1325,11 @@ export function BracketView({
                               })()}
 
                               {/* MATHEMATICAL SQUARE BRACKET CONNECTORS */}
-                              {index < roundNumbers.length - 1 &&
+                              {/* Only single elimination is a clean binary tree;
+                                  league and double-elim sections skip connectors. */}
+                              {!isRoundRobin &&
+                                !isDoubleElim &&
+                                index < roundNumbers.length - 1 &&
                                 (() => {
                                   const topMatch =
                                     matchIdx % 2 === 0
@@ -1117,143 +1414,330 @@ export function BracketView({
                     })()}
                   </div>
                 </div>
-              ),
-            )}
-          </div>
-        </div>
-
-        {/* Floating Swap Confirmation dialog bar */}
-        {isOrganizer && matchSwapCandidate && !matchSwapState && (
-          <div className="absolute bottom-6 left-1/2 z-40 flex w-11/12 max-w-xl -translate-x-1/2 items-center justify-between gap-4 rounded-3xl border border-warning/50 bg-[#0c0c0e]/95 p-4 px-6 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 md:w-auto">
-            <div className="min-w-0">
-              <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-warning">
-                {t("pending_match_swap")} {matchSwapCandidate.matchLabel}
-              </span>
-              <p className="mt-1 truncate text-xs font-bold text-text-tertiary">
-                {t("select_match_to_swap")}
-              </p>
+              ))}
             </div>
-            <button
-              type="button"
-              onClick={clearMatchSwap}
-              disabled={isMatchSwapPending}
-              className="shrink-0 rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-            >
-              {t("cancel_swap")}
-            </button>
           </div>
-        )}
 
-        {isOrganizer && matchSwapState && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex w-11/12 max-w-2xl flex-col gap-4 rounded-3xl border-2 border-warning bg-[#0c0c0e]/95 p-4 px-6 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 md:w-auto md:flex-row md:items-center md:gap-6">
-            <div className="flex min-w-0 flex-col gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-warning">
-                {t("pending_match_swap")}
-              </span>
-              <p className="text-xs font-bold tracking-tight text-white">
-                {t.rich("match_swap_question", {
-                  match1: () => (
-                    <span className="font-black uppercase text-warning">
-                      {matchSwapState.matchLabel1}
-                    </span>
-                  ),
-                  match2: () => (
-                    <span className="font-black uppercase text-warning">
-                      {matchSwapState.matchLabel2}
-                    </span>
-                  ),
-                })}
-              </p>
-              <div className="grid gap-2 text-[10px] font-bold uppercase tracking-wider text-text-tertiary sm:grid-cols-2">
-                <span className="truncate rounded-xl border border-white/5 bg-white/5 px-3 py-2">
-                  {matchSwapState.matchupName1}
+          {/* Floating Swap Confirmation dialog bar */}
+          {isOrganizer && matchSwapCandidate && !matchSwapState && (
+            <div className="absolute bottom-6 left-1/2 z-40 flex w-11/12 max-w-xl -translate-x-1/2 items-center justify-between gap-4 rounded-3xl border border-warning/50 bg-[#0c0c0e]/95 p-4 px-6 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 md:w-auto">
+              <div className="min-w-0">
+                <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-warning">
+                  {t("pending_match_swap")} {matchSwapCandidate.matchLabel}
                 </span>
-                <span className="truncate rounded-xl border border-white/5 bg-white/5 px-3 py-2">
-                  {matchSwapState.matchupName2}
-                </span>
+                <p className="mt-1 truncate text-xs font-bold text-text-tertiary">
+                  {t("select_match_to_swap")}
+                </p>
               </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={handleConfirmMatchSwap}
-                disabled={isMatchSwapPending}
-                className="rounded-xl bg-warning px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-warning/80 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
-              >
-                {isMatchSwapPending ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {t("match_swap_loading")}
-                  </span>
-                ) : (
-                  t("confirm_match_swap")
-                )}
-              </button>
               <button
                 type="button"
                 onClick={clearMatchSwap}
                 disabled={isMatchSwapPending}
-                className="rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                className="shrink-0 rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
                 {t("cancel_swap")}
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {isOrganizer && swapState && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-6 bg-[#0c0c0e]/95 backdrop-blur-md border-2 border-brand-primary p-4 px-6 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 max-w-lg w-11/12 md:w-auto">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em]">
-                {t("pending_swap")}
-              </span>
-              <p className="text-xs text-white font-bold tracking-tight">
-                {t.rich("swap_question", {
-                  team1: () => (
-                    <span className="text-brand-primary uppercase font-black">
-                      {swapState.teamName1}
-                    </span>
-                  ),
-                  team2: () => (
-                    <span className="text-brand-primary uppercase font-black">
-                      {swapState.teamName2}
-                    </span>
-                  ),
-                })}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleConfirmTeamSwap}
-                disabled={isTeamSwapPending}
-                className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/80 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
-              >
-                {isTeamSwapPending ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {t("swap_loading")}
+          {isOrganizer && matchSwapState && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex w-11/12 max-w-2xl flex-col gap-4 rounded-3xl border-2 border-warning bg-[#0c0c0e]/95 p-4 px-6 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 md:w-auto md:flex-row md:items-center md:gap-6">
+              <div className="flex min-w-0 flex-col gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-warning">
+                  {t("pending_match_swap")}
+                </span>
+                <p className="text-xs font-bold tracking-tight text-white">
+                  {t.rich("match_swap_question", {
+                    match1: () => (
+                      <span className="font-black uppercase text-warning">
+                        {matchSwapState.matchLabel1}
+                      </span>
+                    ),
+                    match2: () => (
+                      <span className="font-black uppercase text-warning">
+                        {matchSwapState.matchLabel2}
+                      </span>
+                    ),
+                  })}
+                </p>
+                <div className="grid gap-2 text-[10px] font-bold uppercase tracking-wider text-text-tertiary sm:grid-cols-2">
+                  <span className="truncate rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+                    {matchSwapState.matchupName1}
                   </span>
-                ) : (
-                  t("confirm_swap")
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSwapCandidate(null);
-                  setSwapState(null);
-                  setTrackedTeamId(null);
-                }}
-                disabled={isTeamSwapPending}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-              >
-                {t("cancel_swap")}
-              </button>
+                  <span className="truncate rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+                    {matchSwapState.matchupName2}
+                  </span>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleConfirmMatchSwap}
+                  disabled={isMatchSwapPending}
+                  className="rounded-xl bg-warning px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-warning/80 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                >
+                  {isMatchSwapPending ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {t("match_swap_loading")}
+                    </span>
+                  ) : (
+                    t("confirm_match_swap")
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={clearMatchSwap}
+                  disabled={isMatchSwapPending}
+                  className="rounded-xl bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                >
+                  {t("cancel_swap")}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {isOrganizer && swapState && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-6 bg-[#0c0c0e]/95 backdrop-blur-md border-2 border-brand-primary p-4 px-6 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 max-w-lg w-11/12 md:w-auto">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em]">
+                  {t("pending_swap")}
+                </span>
+                <p className="text-xs text-white font-bold tracking-tight">
+                  {t.rich("swap_question", {
+                    team1: () => (
+                      <span className="text-brand-primary uppercase font-black">
+                        {swapState.teamName1}
+                      </span>
+                    ),
+                    team2: () => (
+                      <span className="text-brand-primary uppercase font-black">
+                        {swapState.teamName2}
+                      </span>
+                    ),
+                  })}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleConfirmTeamSwap}
+                  disabled={isTeamSwapPending}
+                  className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/80 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                >
+                  {isTeamSwapPending ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {t("swap_loading")}
+                    </span>
+                  ) : (
+                    t("confirm_swap")
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSwapCandidate(null);
+                    setSwapState(null);
+                    setTrackedTeamId(null);
+                  }}
+                  disabled={isTeamSwapPending}
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                >
+                  {t("cancel_swap")}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ROUND-ROBIN FIXTURE LIST — compact, scrollable, inline score entry.
+          Scales to large leagues (16-32 teams) without a pan/zoom canvas. */}
+      {isRoundRobin && (
+        <div className="space-y-8">
+          {(selectedRound ? [selectedRound] : roundNumbers).map((roundNum) => {
+            const roundMatches = [...roundsMap[roundNum].matches].sort(
+              (a: Match, b: Match) => a.match_number - b.match_number,
+            );
+            return (
+              <div key={roundNum} className="space-y-3">
+                <div className="flex items-center gap-3 px-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-primary animate-pulse" />
+                  <h4 className="font-display text-sm font-black uppercase tracking-[0.25em] text-white">
+                    {roundsMap[roundNum].name}
+                  </h4>
+                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                </div>
+                <div className="space-y-2">
+                  {roundMatches.map((match: Match) => {
+                    const completed = match.status === "completed";
+                    const canEnter =
+                      isOrganizer &&
+                      !!match.participant1_id &&
+                      !!match.participant2_id &&
+                      !completed;
+                    const p1win = match.winner_id === match.participant1_id;
+                    const p2win = match.winner_id === match.participant2_id;
+                    return (
+                      <form
+                        key={match.id}
+                        action={async (formData) => {
+                          const res = await reportMatchScore(formData);
+                          if (res?.success) {
+                            await fetchMatches();
+                            router.refresh();
+                          }
+                        }}
+                        className={`flex items-center gap-2 md:gap-4 rounded-2xl border px-3 md:px-5 py-3 bg-[#0c0c0e] transition-colors ${
+                          completed
+                            ? "border-success/15"
+                            : "border-white/5 hover:border-brand-primary/20"
+                        }`}
+                      >
+                        <input type="hidden" name="match_id" value={match.id} />
+                        <input
+                          type="hidden"
+                          name="tournament_id"
+                          value={tournamentId}
+                        />
+                        <span className="hidden sm:flex h-7 min-w-7 px-1.5 items-center justify-center rounded-lg bg-white/5 text-[10px] font-black text-text-tertiary shrink-0">
+                          #{match.match_number}
+                        </span>
+
+                        {/* Team A (right-aligned) */}
+                        <div className="flex items-center gap-2 justify-end flex-1 min-w-0">
+                          <span
+                            className={`truncate font-bold uppercase tracking-tight text-xs md:text-sm ${
+                              p1win ? "text-white" : "text-text-tertiary"
+                            }`}
+                          >
+                            {match.p1?.name || t("tbd")}
+                          </span>
+                          {p1win && (
+                            <Trophy className="h-3.5 w-3.5 text-success shrink-0" />
+                          )}
+                          <div className="relative h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                            {match.p1?.logo_url ? (
+                              <Image
+                                src={match.p1.logo_url}
+                                alt={match.p1.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <span className="text-[10px] font-black text-white/40">
+                                {match.p1?.name?.[0]?.toUpperCase() || "?"}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Score / inputs */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {canEnter ? (
+                            <>
+                              <input
+                                type="number"
+                                name="score1"
+                                placeholder="0"
+                                aria-label={t("score_participant1")}
+                                defaultValue={
+                                  match.score_participant1 ?? undefined
+                                }
+                                className="w-11 h-9 bg-white/5 border border-white/10 rounded-lg text-center text-white font-bold focus:border-brand-primary/50 outline-none transition-all"
+                              />
+                              <span className="text-white/30 font-black">
+                                :
+                              </span>
+                              <input
+                                type="number"
+                                name="score2"
+                                placeholder="0"
+                                aria-label={t("score_participant2")}
+                                defaultValue={
+                                  match.score_participant2 ?? undefined
+                                }
+                                className="w-11 h-9 bg-white/5 border border-white/10 rounded-lg text-center text-white font-bold focus:border-brand-primary/50 outline-none transition-all"
+                              />
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-2 px-2">
+                              <span
+                                className={`font-black text-lg ${
+                                  p1win ? "text-success" : "text-white/30"
+                                }`}
+                              >
+                                {match.score_participant1 ?? "-"}
+                              </span>
+                              <span className="text-white/20 text-xs font-black">
+                                :
+                              </span>
+                              <span
+                                className={`font-black text-lg ${
+                                  p2win ? "text-success" : "text-white/30"
+                                }`}
+                              >
+                                {match.score_participant2 ?? "-"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Team B (left-aligned) */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="relative h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                            {match.p2?.logo_url ? (
+                              <Image
+                                src={match.p2.logo_url}
+                                alt={match.p2.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <span className="text-[10px] font-black text-white/40">
+                                {match.p2?.name?.[0]?.toUpperCase() || "?"}
+                              </span>
+                            )}
+                          </div>
+                          {p2win && (
+                            <Trophy className="h-3.5 w-3.5 text-success shrink-0" />
+                          )}
+                          <span
+                            className={`truncate font-bold uppercase tracking-tight text-xs md:text-sm ${
+                              p2win ? "text-white" : "text-text-tertiary"
+                            }`}
+                          >
+                            {match.p2?.name || t("tbd")}
+                          </span>
+                        </div>
+
+                        {/* Action / status */}
+                        <div className="shrink-0 w-24 md:w-28 flex justify-end">
+                          {canEnter ? (
+                            <CompactSaveButton />
+                          ) : completed ? (
+                            <span className="flex items-center gap-1.5 text-[9px] font-black text-success/70 uppercase tracking-widest">
+                              <CheckCircle2 className="h-3 w-3" />
+                              <span className="hidden md:inline">
+                                {t("match_recorded")}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-black text-text-tertiary/60 uppercase tracking-widest">
+                              {t("tbd")}
+                            </span>
+                          )}
+                        </div>
+                      </form>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {selectedMatch && (
         <MatchDetailModal

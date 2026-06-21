@@ -89,7 +89,7 @@ export default async function PublicTournamentDetailPage({
   const { data: matches } = await supabase
     .from("matches")
     .select(
-      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name)",
+      "*, p1:participants!participant1_id(name, logo_url), p2:participants!participant2_id(name, logo_url), rounds(number, name, group_name)",
     )
     .eq("stage_id", currentStage?.id || "")
     .order("match_number", { ascending: true });
@@ -268,6 +268,7 @@ export default async function PublicTournamentDetailPage({
                   initialMatches={matches || []}
                   tournamentId={id}
                   isOrganizer={false}
+                  stageType={currentStage?.stage_type}
                 />
               </div>
             </section>

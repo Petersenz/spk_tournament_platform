@@ -56,6 +56,25 @@ export async function reportMatchScore(formData: FormData) {
       .eq("id", tournamentId);
   }
 
+  // 5. Drop the loser into the losers bracket (double elimination).
+  // No-op for single elimination / round robin (next_loser_match_id is null).
+  if (match.next_loser_match_id) {
+    const loserId =
+      winnerId === match.participant1_id
+        ? match.participant2_id
+        : match.participant1_id;
+    if (loserId) {
+      const loserSlotField =
+        match.next_loser_match_slot === 1
+          ? "participant1_id"
+          : "participant2_id";
+      await supabase
+        .from("matches")
+        .update({ [loserSlotField]: loserId })
+        .eq("id", match.next_loser_match_id);
+    }
+  }
+
   revalidatePath(`/organizer/tournaments/${tournamentId}`);
   return { success: true };
 }
@@ -111,6 +130,24 @@ export async function updateMatchDetails(formData: FormData) {
       .from("tournaments")
       .update({ status: "completed" })
       .eq("id", tournamentId);
+  }
+
+  // 5. Drop the loser into the losers bracket (double elimination).
+  if (status === "completed" && finalWinnerId && match?.next_loser_match_id) {
+    const loserId =
+      finalWinnerId === match.participant1_id
+        ? match.participant2_id
+        : match.participant1_id;
+    if (loserId) {
+      const loserSlotField =
+        match.next_loser_match_slot === 1
+          ? "participant1_id"
+          : "participant2_id";
+      await supabase
+        .from("matches")
+        .update({ [loserSlotField]: loserId })
+        .eq("id", match.next_loser_match_id);
+    }
   }
 
   revalidatePath(`/organizer/tournaments/${tournamentId}`);

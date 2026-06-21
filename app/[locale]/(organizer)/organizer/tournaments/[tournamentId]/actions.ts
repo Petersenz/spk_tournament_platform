@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateSingleElimination } from "@/lib/bracket-engine/single-elimination";
+import { generateDoubleElimination } from "@/lib/bracket-engine/double-elimination";
 import { generateRoundRobin } from "@/lib/bracket-engine/round-robin";
 import { getTranslations } from "next-intl/server";
 
@@ -46,6 +47,8 @@ export async function generateBracket(
     // 3. Generate matches
     if (stage.stage_type === "single_elimination") {
       await generateSingleElimination(stageId, participants);
+    } else if (stage.stage_type === "double_elimination") {
+      await generateDoubleElimination(stageId, participants);
     } else if (stage.stage_type === "round_robin") {
       await generateRoundRobin(stageId, participants);
     } else {
