@@ -346,6 +346,75 @@ export async function updateTournament(
   redirect(`/organizer/tournaments/${tournamentId}`);
 }
 
+export async function updateLeaguePoints(
+  tournamentId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: tournament, error: tError } = await supabase
+    .from("tournaments")
+    .select("id, projects(owner_id)")
+    .eq("id", tournamentId)
+    .single();
+  if (tError || !tournament) return { error: "Tournament not found" };
+
+  const isOwner =
+    getProjectOwnerId((tournament as TournamentAccessRow).projects) === user.id;
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role !== "admin") {
+      return { error: "Unauthorized: Not owner or admin" };
+    }
+  }
+
+  const { data: stage } = await supabase
+    .from("stages")
+    .select("id, stage_type, settings")
+    .eq("tournament_id", tournamentId)
+    .order("order_index", { ascending: true })
+    .limit(1)
+    .single();
+
+  if (!stage || stage.stage_type !== "round_robin") {
+    return { error: "League points apply to round-robin stages only" };
+  }
+
+  const readPoint = (key: string, fallback: number) => {
+    const v = parseInt(formData.get(key) as string);
+    return Number.isNaN(v) ? fallback : v;
+  };
+  const currentSettings =
+    stage.settings && typeof stage.settings === "object" ? stage.settings : {};
+  const settings = {
+    ...currentSettings,
+    points: {
+      win: readPoint("points_win", 3),
+      draw: readPoint("points_draw", 1),
+      loss: readPoint("points_loss", 0),
+    },
+  };
+
+  const { error } = await supabase
+    .from("stages")
+    .update({ settings })
+    .eq("id", stage.id);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/organizer/tournaments/${tournamentId}`);
+  revalidatePath(`/organizer/tournaments/${tournamentId}/edit`);
+  revalidatePath(`/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
 export async function deleteTournament(
   tournamentId: string,
 ): Promise<ActionResult> {

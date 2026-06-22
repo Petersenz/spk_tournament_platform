@@ -22,6 +22,22 @@ export async function saveTournamentSetup(
   const team_max_players =
     parseInt(formData.get("team_max_players") as string) || 5;
 
+  // League points (round-robin only) — stored in stages.settings.
+  const readPoint = (key: string, fallback: number) => {
+    const v = parseInt(formData.get(key) as string);
+    return Number.isNaN(v) ? fallback : v;
+  };
+  const stageSettings =
+    stage_type === "round_robin"
+      ? {
+          points: {
+            win: readPoint("points_win", 3),
+            draw: readPoint("points_draw", 1),
+            loss: readPoint("points_loss", 0),
+          },
+        }
+      : {};
+
   try {
     // 1. Update Tournament Basic Settings
     const { error: tournamentError } = await supabase
@@ -55,6 +71,7 @@ export async function saveTournamentSetup(
             | "single_elimination"
             | "double_elimination"
             | "round_robin",
+          settings: stageSettings,
         })
         .eq("id", existingStages[0].id);
       error = updateError;
@@ -67,6 +84,7 @@ export async function saveTournamentSetup(
           | "double_elimination"
           | "round_robin",
         order_index: 1,
+        settings: stageSettings,
       });
       error = insertError;
     }

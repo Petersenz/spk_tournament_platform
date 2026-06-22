@@ -166,6 +166,55 @@ describe("computeStandings", () => {
     expect(rows[2]).toMatchObject({ points: 0, diff: -6 });
   });
 
+  it("honours a custom points configuration", () => {
+    const matches = [
+      match({
+        status: "completed",
+        participant1_id: "a",
+        participant2_id: "b",
+        winner_id: "a",
+        score_participant1: 1,
+        score_participant2: 0,
+        p1: { name: "Alpha" },
+        p2: { name: "Bravo" },
+      }),
+      match({
+        status: "completed",
+        participant1_id: "a",
+        participant2_id: "c",
+        winner_id: null,
+        score_participant1: 2,
+        score_participant2: 2,
+        p1: { name: "Alpha" },
+        p2: { name: "Charlie" },
+      }),
+    ];
+    // win = 2, draw = 1, loss = 0
+    const rows = computeStandings(matches, { win: 2, draw: 1, loss: 0 });
+    const a = rows.find((r) => r.id === "a")!;
+    const b = rows.find((r) => r.id === "b")!;
+    const c = rows.find((r) => r.id === "c")!;
+    expect(a.points).toBe(3); // one win (2) + one draw (1)
+    expect(b.points).toBe(0); // loss
+    expect(c.points).toBe(1); // draw
+  });
+
+  it("defaults to 3/1/0 when no points config is given", () => {
+    const rows = computeStandings([
+      match({
+        status: "completed",
+        participant1_id: "a",
+        participant2_id: "b",
+        winner_id: "a",
+        score_participant1: 1,
+        score_participant2: 0,
+        p1: { name: "Alpha" },
+        p2: { name: "Bravo" },
+      }),
+    ]);
+    expect(rows.find((r) => r.id === "a")!.points).toBe(3);
+  });
+
   it("breaks equal points and difference by name", () => {
     // Two separate 1-0 wins: both winners have 3 pts and +1 diff.
     const rows = computeStandings([

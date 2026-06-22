@@ -54,10 +54,15 @@ export async function reportMatchScore(formData: FormData) {
   if (winnerId && match.next_match_id) {
     const slotField =
       match.next_match_slot === 1 ? "participant1_id" : "participant2_id";
-    await supabase
+    const { error: advanceError } = await supabase
       .from("matches")
       .update({ [slotField]: winnerId })
       .eq("id", match.next_match_id);
+    if (advanceError) {
+      return {
+        error: `Saved, but advancing the winner failed: ${advanceError.message}`,
+      };
+    }
   }
 
   // 5. Drop the loser into the losers bracket (double elimination).
@@ -72,10 +77,15 @@ export async function reportMatchScore(formData: FormData) {
         match.next_loser_match_slot === 1
           ? "participant1_id"
           : "participant2_id";
-      await supabase
+      const { error: dropError } = await supabase
         .from("matches")
         .update({ [loserSlotField]: loserId })
         .eq("id", match.next_loser_match_id);
+      if (dropError) {
+        return {
+          error: `Saved, but dropping the loser failed: ${dropError.message}`,
+        };
+      }
     }
   }
 

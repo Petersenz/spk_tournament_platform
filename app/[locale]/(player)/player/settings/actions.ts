@@ -32,13 +32,13 @@ export async function updateProfile(formData: FormData, path?: string) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
-    } else {
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("logos").getPublicUrl(filePath);
-      avatar_url = publicUrl;
+      // Surface the failure instead of silently saving without the avatar.
+      return { error: `Avatar upload failed: ${uploadError.message}` };
     }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("logos").getPublicUrl(filePath);
+    avatar_url = publicUrl;
   }
 
   const updateData: Record<string, unknown> = {

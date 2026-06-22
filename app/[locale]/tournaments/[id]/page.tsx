@@ -269,6 +269,13 @@ export default async function PublicTournamentDetailPage({
                   tournamentId={id}
                   isOrganizer={false}
                   stageType={currentStage?.stage_type}
+                  pointsConfig={
+                    (
+                      currentStage?.settings as {
+                        points?: { win: number; draw: number; loss: number };
+                      } | null
+                    )?.points
+                  }
                 />
               </div>
             </section>

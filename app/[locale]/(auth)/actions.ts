@@ -72,7 +72,11 @@ export async function signup(formData: FormData, locale: string = "th") {
   const password = formData.get("password") as string;
   const nickname = formData.get("nickname") as string;
   const custom_user_identifier = formData.get("custom_id") as string;
-  const role = (formData.get("role") as string) || "player";
+  // Only allow self-registration as player or organizer. Anything else
+  // (e.g. a crafted "admin") falls back to player to prevent privilege
+  // escalation — admin must be granted by an existing admin.
+  const requestedRole = formData.get("role") as string;
+  const role = requestedRole === "organizer" ? "organizer" : "player";
 
   const { error } = await supabase.auth.signUp({
     email,

@@ -1,16 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  Gamepad2,
-  Plus,
-  Edit2,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { Gamepad2, Plus, Edit2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/lib/i18n/routing";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { DeleteGameButton } from "./DeleteGameButton";
 
 export async function generateMetadata({
   params,
@@ -129,12 +123,7 @@ export default async function AdminGamesPage() {
                     {t("edit")}
                   </Button>
                 </Link>
-                <Button
-                  variant="ghost"
-                  className="w-full text-text-tertiary hover:text-error hover:bg-error/5 font-black uppercase tracking-widest text-[10px] rounded-xl h-11 transition-all"
-                >
-                  <Trash2 className="mr-2 h-3 w-3" /> {t("delete")}
-                </Button>
+                <DeleteGameButton gameId={game.id} gameName={game.name} />
               </div>
             </div>
           </div>

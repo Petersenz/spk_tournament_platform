@@ -128,6 +128,53 @@ export async function rejectRegistration(formData: FormData) {
   const supabase = await createClient();
   const registrationId = formData.get("registration_id") as string;
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized: No session" };
+  }
+
+  // 1. Load the registration (to find its tournament)
+  const { data: registration, error: fetchError } = await supabase
+    .from("registrations")
+    .select("id, tournament_id")
+    .eq("id", registrationId)
+    .single();
+
+  if (fetchError || !registration) {
+    return { error: `Registration not found: ${fetchError?.message}` };
+  }
+
+  // 2. Authorization: tournament owner or admin only
+  const { data: tournament, error: tError } = await supabase
+    .from("tournaments")
+    .select("id, projects(owner_id)")
+    .eq("id", registration.tournament_id)
+    .single();
+
+  if (tError || !tournament) {
+    return { error: `Tournament not found: ${tError?.message}` };
+  }
+
+  const project = Array.isArray(tournament.projects)
+    ? tournament.projects[0]
+    : tournament.projects;
+  const isOwner = project?.owner_id === user.id;
+
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role !== "admin") {
+      return { error: "Unauthorized: Not owner or admin" };
+    }
+  }
+
+  // 3. Reject
   const { error } = await supabase
     .from("registrations")
     .update({ status: "rejected" })
@@ -135,7 +182,9 @@ export async function rejectRegistration(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/");
+  revalidatePath(
+    `/organizer/tournaments/${registration.tournament_id}/participants`,
+  );
   return { success: true };
 }
 

@@ -2,6 +2,40 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin/require-admin";
+
+export async function deleteGameAction(gameId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  if (!gameId) return { error: "Missing game id" };
+
+  // Block deletion while tournaments still reference this game.
+  const { count, error: countError } = await supabase
+    .from("tournaments")
+    .select("id", { count: "exact", head: true })
+    .eq("game_id", gameId);
+
+  if (countError) return { error: countError.message };
+  if (count && count > 0) {
+    return {
+      error: `Cannot delete: ${count} tournament(s) still use this game.`,
+    };
+  }
+
+  // Remove platform links first, then the game itself.
+  const { error: linkError } = await supabase
+    .from("game_platforms")
+    .delete()
+    .eq("game_id", gameId);
+  if (linkError) return { error: linkError.message };
+
+  const { error } = await supabase.from("games").delete().eq("id", gameId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/games");
+  return { success: true };
+}
 
 async function syncGamePlatforms(
   supabase: Awaited<ReturnType<typeof createClient>>,

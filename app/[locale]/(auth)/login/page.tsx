@@ -94,12 +94,8 @@ export default function LoginPage() {
               >
                 {t("password")}
               </Label>
-              <Link
-                href="#"
-                className="text-xs font-bold uppercase tracking-widest text-brand-primary/60 hover:text-brand-primary transition-colors"
-              >
-                {t("forgot_password")}
-              </Link>
+              {/* Forgot-password reset flow is not implemented yet — hidden
+                  until the reset page + email flow are added. */}
             </div>
             <div className="relative group">
               <Input

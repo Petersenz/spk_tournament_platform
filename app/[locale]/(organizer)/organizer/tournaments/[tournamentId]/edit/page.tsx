@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { TournamentForm } from "@/components/tournament/TournamentForm";
 import { updateTournament } from "../actions";
+import { LeaguePointsEditForm } from "./LeaguePointsEditForm";
 import { Link } from "@/lib/i18n/routing";
 import { ChevronLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -56,6 +57,21 @@ export default async function EditTournamentPage({
     tournament.tournament_platforms as { platform_id: string }[]
   ).map((tp) => tp.platform_id);
 
+  // League points are editable only for round-robin stages.
+  const { data: stage } = await supabase
+    .from("stages")
+    .select("stage_type, settings")
+    .eq("tournament_id", tournamentId)
+    .order("order_index", { ascending: true })
+    .limit(1)
+    .single();
+  const isRoundRobin = stage?.stage_type === "round_robin";
+  const leaguePoints = (
+    stage?.settings as {
+      points?: { win: number; draw: number; loss: number };
+    } | null
+  )?.points;
+
   // Wrap updateTournament to include the ID
   const boundUpdateAction = async (formData: FormData) => {
     "use server";
@@ -88,6 +104,16 @@ export default async function EditTournamentPage({
         submitAction={boundUpdateAction}
         cancelHref={`/organizer/tournaments/${tournamentId}`}
       />
+
+      {isRoundRobin && (
+        // Extra bottom padding so this form clears the form's fixed save bar.
+        <div className="max-w-2xl pb-44">
+          <LeaguePointsEditForm
+            tournamentId={tournamentId}
+            defaultPoints={leaguePoints}
+          />
+        </div>
+      )}
     </div>
   );
 }
