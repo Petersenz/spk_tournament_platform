@@ -99,11 +99,13 @@ export function BracketView({
   tournamentId,
   isOrganizer = false,
   stageType,
+  pointsConfig,
 }: {
   initialMatches: Match[];
   tournamentId: string;
   isOrganizer?: boolean;
   stageType?: string | null;
+  pointsConfig?: { win: number; draw: number; loss: number } | null;
 }) {
   const t = useTranslations("Tournament");
   const router = useRouter();
@@ -514,7 +516,10 @@ export function BracketView({
       : roundNumbers;
 
   // League table — only meaningful for round-robin, but cheap to keep memoized.
-  const standings = useMemo(() => computeStandings(matches), [matches]);
+  const standings = useMemo(
+    () => computeStandings(matches, pointsConfig ?? undefined),
+    [matches, pointsConfig],
+  );
   const leagueComplete =
     isRoundRobin &&
     matches.length > 0 &&

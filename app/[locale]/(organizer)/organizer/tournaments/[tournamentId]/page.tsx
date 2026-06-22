@@ -441,6 +441,13 @@ export default async function TournamentDashboardPage({
               tournamentId={tournamentId}
               isOrganizer={true}
               stageType={currentStage?.stage_type}
+              pointsConfig={
+                (
+                  currentStage?.settings as {
+                    points?: { win: number; draw: number; loss: number };
+                  } | null
+                )?.points
+              }
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-40 text-center border border-white/5 bg-white/2 rounded-[3rem] backdrop-blur-sm border-dashed">

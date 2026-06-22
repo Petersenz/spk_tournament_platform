@@ -14,6 +14,14 @@ export interface StandingMatch {
   p2?: { name: string; logo_url?: string | null };
 }
 
+export interface LeaguePoints {
+  win: number;
+  draw: number;
+  loss: number;
+}
+
+export const DEFAULT_LEAGUE_POINTS: LeaguePoints = { win: 3, draw: 1, loss: 0 };
+
 export interface StandingRow {
   id: string;
   name: string;
@@ -36,7 +44,10 @@ export interface StandingRow {
  * difference, then score scored, then wins, then name. Every participant that
  * appears in a fixture is listed, even before they have played.
  */
-export function computeStandings(matches: StandingMatch[]): StandingRow[] {
+export function computeStandings(
+  matches: StandingMatch[],
+  points: LeaguePoints = DEFAULT_LEAGUE_POINTS,
+): StandingRow[] {
   const table = new Map<string, StandingRow>();
 
   const ensureRow = (
@@ -90,17 +101,19 @@ export function computeStandings(matches: StandingMatch[]): StandingRow[] {
     if (match.winner_id === match.participant1_id) {
       row1.won += 1;
       row2.lost += 1;
-      row1.points += 3;
+      row1.points += points.win;
+      row2.points += points.loss;
     } else if (match.winner_id === match.participant2_id) {
       row2.won += 1;
       row1.lost += 1;
-      row2.points += 3;
+      row2.points += points.win;
+      row1.points += points.loss;
     } else {
       // Completed with no winner → draw.
       row1.drawn += 1;
       row2.drawn += 1;
-      row1.points += 1;
-      row2.points += 1;
+      row1.points += points.draw;
+      row2.points += points.draw;
     }
   }
 
