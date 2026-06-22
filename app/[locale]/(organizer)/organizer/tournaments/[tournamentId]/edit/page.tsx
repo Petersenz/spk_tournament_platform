@@ -106,7 +106,8 @@ export default async function EditTournamentPage({
       />
 
       {isRoundRobin && (
-        <div className="max-w-2xl">
+        // Extra bottom padding so this form clears the form's fixed save bar.
+        <div className="max-w-2xl pb-44">
           <LeaguePointsEditForm
             tournamentId={tournamentId}
             defaultPoints={leaguePoints}

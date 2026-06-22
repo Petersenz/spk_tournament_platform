@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 
 interface LeaguePointsConfigProps {
   defaultWin?: number;
@@ -17,17 +16,18 @@ const PRESETS: { label: string; win: number; draw: number; loss: number }[] = [
   { label: "1 / 0 / 0", win: 1, draw: 0, loss: 0 },
 ];
 
+// Native input — the shared shadcn Input wraps a base-ui field that does not
+// reflect typed/programmatic values back into the form, and type="number"
+// would not even paint its value here. A plain controlled text input renders
+// reliably AND submits exactly what the organizer types (parsed server-side).
 const inputClass =
-  "h-12 bg-white/5 border-white/10 rounded-xl text-center text-white font-bold";
+  "h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/5 px-4 text-center text-white font-bold outline-none transition-all focus:border-brand-primary shadow-inner";
 
 /**
- * League points editor (round-robin). Renders three number inputs named
+ * League points editor (round-robin). Renders three numeric fields named
  * points_win / points_draw / points_loss plus quick presets. Used in both the
- * setup wizard and the tournament edit form.
- *
- * The fields are uncontrolled (defaultValue): the shared Input re-keys on its
- * defaultValue, so clicking a preset re-mounts the inputs with the new numbers
- * while manual typing is still submitted normally.
+ * setup wizard and the tournament edit form. Values are kept as strings so the
+ * fields can be cleared/typed freely; the server parses them.
  */
 export function LeaguePointsConfig({
   defaultWin = 3,
@@ -35,18 +35,22 @@ export function LeaguePointsConfig({
   defaultLoss = 0,
 }: LeaguePointsConfigProps) {
   const t = useTranslations("Tournament");
-  const [win, setWin] = useState(defaultWin);
-  const [draw, setDraw] = useState(defaultDraw);
-  const [loss, setLoss] = useState(defaultLoss);
+  const [win, setWin] = useState(String(defaultWin));
+  const [draw, setDraw] = useState(String(defaultDraw));
+  const [loss, setLoss] = useState(String(defaultLoss));
 
   const apply = (p: (typeof PRESETS)[number]) => {
-    setWin(p.win);
-    setDraw(p.draw);
-    setLoss(p.loss);
+    setWin(String(p.win));
+    setDraw(String(p.draw));
+    setLoss(String(p.loss));
   };
 
   const isActivePreset = (p: (typeof PRESETS)[number]) =>
-    p.win === win && p.draw === draw && p.loss === loss;
+    Number(win) === p.win && Number(draw) === p.draw && Number(loss) === p.loss;
+
+  const onNumeric =
+    (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setter(e.target.value.replace(/[^0-9]/g, ""));
 
   return (
     <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
@@ -87,12 +91,13 @@ export function LeaguePointsConfig({
           >
             {t("points_win")}
           </Label>
-          <Input
+          <input
             id="points_win"
             name="points_win"
             type="text"
             inputMode="numeric"
-            defaultValue={win}
+            value={win}
+            onChange={onNumeric(setWin)}
             className={inputClass}
           />
         </div>
@@ -103,12 +108,13 @@ export function LeaguePointsConfig({
           >
             {t("points_draw")}
           </Label>
-          <Input
+          <input
             id="points_draw"
             name="points_draw"
             type="text"
             inputMode="numeric"
-            defaultValue={draw}
+            value={draw}
+            onChange={onNumeric(setDraw)}
             className={inputClass}
           />
         </div>
@@ -119,12 +125,13 @@ export function LeaguePointsConfig({
           >
             {t("points_loss")}
           </Label>
-          <Input
+          <input
             id="points_loss"
             name="points_loss"
             type="text"
             inputMode="numeric"
-            defaultValue={loss}
+            value={loss}
+            onChange={onNumeric(setLoss)}
             className={inputClass}
           />
         </div>
