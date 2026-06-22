@@ -17,10 +17,17 @@ const PRESETS: { label: string; win: number; draw: number; loss: number }[] = [
   { label: "1 / 0 / 0", win: 1, draw: 0, loss: 0 },
 ];
 
+const inputClass =
+  "h-12 bg-white/5 border-white/10 rounded-xl text-center text-white font-bold";
+
 /**
  * League points editor (round-robin). Renders three number inputs named
  * points_win / points_draw / points_loss plus quick presets. Used in both the
  * setup wizard and the tournament edit form.
+ *
+ * The fields are uncontrolled (defaultValue): the shared Input re-keys on its
+ * defaultValue, so clicking a preset re-mounts the inputs with the new numbers
+ * while manual typing is still submitted normally.
  */
 export function LeaguePointsConfig({
   defaultWin = 3,
@@ -83,11 +90,10 @@ export function LeaguePointsConfig({
           <Input
             id="points_win"
             name="points_win"
-            type="number"
-            min={0}
-            value={win}
-            onChange={(e) => setWin(Number(e.target.value))}
-            className="h-12 bg-white/5 border-white/10 rounded-xl text-center text-white font-bold"
+            type="text"
+            inputMode="numeric"
+            defaultValue={win}
+            className={inputClass}
           />
         </div>
         <div className="space-y-2">
@@ -100,11 +106,10 @@ export function LeaguePointsConfig({
           <Input
             id="points_draw"
             name="points_draw"
-            type="number"
-            min={0}
-            value={draw}
-            onChange={(e) => setDraw(Number(e.target.value))}
-            className="h-12 bg-white/5 border-white/10 rounded-xl text-center text-white font-bold"
+            type="text"
+            inputMode="numeric"
+            defaultValue={draw}
+            className={inputClass}
           />
         </div>
         <div className="space-y-2">
@@ -117,11 +122,10 @@ export function LeaguePointsConfig({
           <Input
             id="points_loss"
             name="points_loss"
-            type="number"
-            min={0}
-            value={loss}
-            onChange={(e) => setLoss(Number(e.target.value))}
-            className="h-12 bg-white/5 border-white/10 rounded-xl text-center text-white font-bold"
+            type="text"
+            inputMode="numeric"
+            defaultValue={loss}
+            className={inputClass}
           />
         </div>
       </div>
